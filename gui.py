@@ -8,15 +8,22 @@ from gui_classes import *
 pyglet.options['audio'] = ('alsa', 'openal', 'silent')
 key = pyglet.window.key
 # xfce4-notifyd 
+debug = True
 
 class main(pyglet.window.Window):
 	def __init__ (self):
 		super(main, self).__init__(800, 800, fullscreen = False)
-		self.bg = Spr('background.jpg')
+		self.x, self.y = 0, 0
 
+		self.bg = Spr('background.jpg')
 		self.sprites = {}
-		self.sprites['2-test'] = Spr(x=self.width/2, y=self.height/2-100)
-		self.sprites['3-menu'] = Menu(self.sprites['2-test'], {'Main' : {}, 'Preferences' : {}})
+		self.sprites['2-test'] = Spr(x=0, y=0, height=self.height, moveable=False)
+		self.sprites['3-menu'] = Menu(self, {'Main' : {}, 'Preferences' : {}})
+
+		test_list = {}#{'test' : 'value of test', 'something' : 'has a value'}
+		for i in range(0, 45):
+			test_list['List item ' + str(i)] = i
+		self.sprites['4-test-list'] = List(self.sprites['2-test'], test_list, height=self.height-20)
 
 		self.lines = {}
 		self.merge_sprites = {}
@@ -57,6 +64,8 @@ class main(pyglet.window.Window):
 	def on_mouse_release(self, x, y, button, modifiers):
 		if button == 1:
 			if self.active[1] and not self.drag and self.multiselect == False:
+				if debug:
+					print('[DEBUG] Clicking inside ' + self.active[0] +'\'s object',self.active[1])
 				self.active[1].click(x, y, self.merge_sprites)
 				if self.active[0] == 'menu':
 					del(self.sprites['menu'])
@@ -82,6 +91,8 @@ class main(pyglet.window.Window):
 				if sprite:
 					sprite_obj = sprite.click_check(x, y)
 					if sprite_obj:
+						if debug:
+							print('[DEBUG] Activating ' + sprite_name + '\'s object',sprite_obj)
 						self.active = sprite_name, sprite_obj
 						if button == 1:
 							if self.multiselect != False:
@@ -169,7 +180,8 @@ class main(pyglet.window.Window):
 		if self.multiselect != False:
 			for sprite_name in self.multiselect:
 				sprite = self.sprites[sprite_name]
-				sprite.draw_border(color=(0.2, 1.0, 0.2, 0.5))
+				if sprite.moveable:
+					sprite.draw_border(color=(0.2, 1.0, 0.2, 0.5))
 
 		if 'menu' in self.sprites:
 			self.sprites['menu']._draw()

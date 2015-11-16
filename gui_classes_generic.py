@@ -3,7 +3,7 @@ from pyglet.gl import *
 from os.path import isfile
 
 class Spr(pyglet.sprite.Sprite):
-	def __init__(self, texture=None, width=None, height=None, color="#C2C2C2", x=None, y=None, anchor=None):
+	def __init__(self, texture=None, width=None, height=None, color="#C2C2C2", x=None, y=None, anchor=None, moveable=True):
 		if not texture or not isfile(texture):
 			## If no texture was supplied, we will create one
 			if not width:
@@ -24,6 +24,8 @@ class Spr(pyglet.sprite.Sprite):
 			self.x = x
 		if y:
 			self.y = y
+
+		self.moveable = moveable
 
 	def gen_solid_img(self, width, height, c):
 		c = c.lstrip("#")
@@ -189,8 +191,9 @@ class Spr(pyglet.sprite.Sprite):
 		return ''
 
 	def move(self, x, y):
-		self.x += x
-		self.y += y
+		if self.moveable:
+			self.x += x
+			self.y += y
 
 	def _draw(self):
 		"""
