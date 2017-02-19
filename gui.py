@@ -1,8 +1,9 @@
 import pyglet
 from pyglet.gl import *
-from threading import *
+from collections import OrderedDict
+#from threading import *
 
-from gui_classes import *
+from PygletGui.gui_classes import *
 
 # REQUIRES: AVBin
 pyglet.options['audio'] = ('alsa', 'openal', 'silent')
@@ -11,22 +12,27 @@ key = pyglet.window.key
 debug = True
 
 class main(pyglet.window.Window):
-	def __init__ (self):
+	def __init__ (self, demo=False):
 		super(main, self).__init__(800, 800, fullscreen = False)
 		self.x, self.y = 0, 0
 
-		self.bg = Spr('background.jpg')
-		self.sprites = {}
-		self.sprites['2-test'] = Spr(x=0, y=0, height=self.height, moveable=False)
-		self.sprites['3-menu'] = Menu(self, {'Main' : {}, 'Preferences' : {}})
-
-		test_list = {}#{'test' : 'value of test', 'something' : 'has a value'}
-		for i in range(0, 45):
-			test_list['List item ' + str(i)] = i
-		self.sprites['4-test-list'] = List(self.sprites['2-test'], test_list, height=self.height-20)
-
+		self.sprites = OrderedDict()
+		self.pages = {'_active_' : None}
 		self.lines = {}
-		self.merge_sprites = {}
+		self.merge_sprites_dict = {}
+
+		## == Demo sprites:
+		if demo:
+			self.sprites['1-bg'] = Spr('background.jpg')
+			self.sprites['2-test'] = Spr(x=0, y=0, height=self.height, moveable=False)
+			self.sprites['3-menu'] = Menu(self, {'Main' : {}, 'Preferences' : {}})
+
+			test_list = {}#{'test' : 'value of test', 'something' : 'has a value'}
+			for i in range(0, 45):
+				test_list['List item ' + str(i)] = i
+			self.sprites['4-test-list'] = List(self.sprites['2-test'], test_list, height=self.height-20)
+
+			self.pages['main'] = ('1-bg', '2-test', '3-menu', '4-test-list')
 
 		self.drag = False
 		self.active = None, None
@@ -38,6 +44,32 @@ class main(pyglet.window.Window):
 
 	def on_close(self):
 		self.alive = 0
+
+	def add_page(self, name, sprites):
+		self.pages[name] = sprites
+
+	def swap_page(self, name):
+		if name in self.pages:
+			self.pages['_active_'] = name
+
+	def add_merge_sprites(self, sprites):
+		for key, val in sprites.items():
+			self.sprites[key] = val
+
+	def merge_sprites(self):
+		## We're using self.merge_sprites_dict here so that sub-items
+		## can add back new graphical content but not in the active
+		## pool of rendered objects, instead we'll lift them in for
+		## the subitems so they don't have to worry about cycles
+		## or how to deal with them.
+
+		if len(self.merge_sprites_dict) > 0:
+			merge_sprite = self.merge_sprites_dict.popitem()
+			#if merge_sprite[0] == 'input':
+			#	self.requested_input = merge_sprite[1][0]
+			#	self.sprites[merge_sprite[0]] = merge_sprite[1][1]
+			#else:
+			self.sprites[merge_sprite[0]] = merge_sprite[1]
 
 	def on_mouse_motion(self, x, y, dx, dy):
 		for sprite_name, sprite in self.sprites.items():
@@ -66,9 +98,10 @@ class main(pyglet.window.Window):
 			if self.active[1] and not self.drag and self.multiselect == False:
 				if debug:
 					print('[DEBUG] Clicking inside ' + self.active[0] +'\'s object',self.active[1])
-				self.active[1].click(x, y, self.merge_sprites)
-				if self.active[0] == 'menu':
-					del(self.sprites['menu'])
+
+				self.active[1].click(x, y, self.merge_sprites_dict)
+				#if self.active[0] == 'menu':
+				#	del(self.sprites['menu'])
 			self.drag = False
 			if 'link' in self.lines:
 				##   link_objects( lines == ((x, y), (x, y)) )
@@ -77,7 +110,7 @@ class main(pyglet.window.Window):
 			if not self.active[0]:
 				pass #Do something on empty spaces?
 			else:
-				self.active[1].right_click(x, y, self.merge_sprites)
+				self.active[1].right_click(x, y, self.merge_sprites_dict)
 			#self.sprites['temp_vm'] = virtualMachine(pos=(x-48, y-48))
 			#self.requested_input = self.sprites['temp_vm'].draws['1-title']
 			#self.sprites['input'] = Input("Enter the name of your virtual machine", pos=(int(self.width/2-128), int(self.height/2-60)), height=120)
@@ -139,7 +172,7 @@ class main(pyglet.window.Window):
 
 	def render(self):
 		self.clear()
-		self.bg.draw()
+		#self.bg.draw()
 
 		for group_name in self.lines:
 			if group_name == 'link':
@@ -151,13 +184,7 @@ class main(pyglet.window.Window):
 
 			self.draw_line(xy, dxy)
 
-		if len(self.merge_sprites) > 0:
-			merge_sprite = self.merge_sprites.popitem()
-			#if merge_sprite[0] == 'input':
-			#	self.requested_input = merge_sprite[1][0]
-			#	self.sprites[merge_sprite[0]] = merge_sprite[1][1]
-			#else:
-			self.sprites[merge_sprite[0]] = merge_sprite[1]
+		self.merge_sprites()
 
 
 		## Some special code for creating the "header",
@@ -173,21 +200,25 @@ class main(pyglet.window.Window):
 		#glEnd()
 		#self.draw_line((0, self.height-64-26), (self.width, self.height-64-26))
 		
-		for sprite_name, sprite in self.sprites.items():
-			if sprite and sprite_name not in ('msgbox', 'input', 'menu'):
-				sprite._draw()
+		if self.pages['_active_'] is None:
+			for sprite_name, sprite in self.sprites.items():
+				if sprite and sprite_name not in ('msgbox', 'input', 'menu'):
+					sprite._draw()
 
-		if self.multiselect != False:
-			for sprite_name in self.multiselect:
-				sprite = self.sprites[sprite_name]
-				if sprite.moveable:
-					sprite.draw_border(color=(0.2, 1.0, 0.2, 0.5))
+			if self.multiselect != False:
+				for sprite_name in self.multiselect:
+					sprite = self.sprites[sprite_name]
+					if sprite.moveable:
+						sprite.draw_border(color=(0.2, 1.0, 0.2, 0.5))
 
-		if 'menu' in self.sprites:
-			self.sprites['menu']._draw()
+			if 'menu' in self.sprites:
+				self.sprites['menu']._draw()
 
-		if 'input' in self.sprites:
-			self.sprites['input']._draw()
+			if 'input' in self.sprites:
+				self.sprites['input']._draw()
+		else:
+			for sprite_name in self.pages[self.pages['_active_']]:
+				self.sprites[sprite_name]._draw()
 
 		#if 'msgbox' in self.sprites:
 		#	if self.sprites['msgbox']:
@@ -208,5 +239,6 @@ class main(pyglet.window.Window):
 			#
 			event = self.dispatch_events()
 
-x = main()
-x.run()
+if __name__ == '__main__':
+	x = main()
+	x.run()

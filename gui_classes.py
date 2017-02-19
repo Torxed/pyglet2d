@@ -1,6 +1,6 @@
 import pyglet
 from pyglet.gl import *
-from gui_classes_generic import Spr
+from PygletGui.gui_classes_generic import Spr
 
 class Input(Spr):
 	def __init__(self, title='Test', pos=(0,0), width=None, height=None):
