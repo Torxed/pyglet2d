@@ -12,11 +12,15 @@ Here's a quick demo of what you can do:
 import PygletGui.gui
 from PygletGui.gui_classes import *
 
+def test_func(*args, **kwargs):
+	print('Pressed a button:', args, kwargs)
+
+
 context = PygletGui.gui.main()
 
 sprites = {
 	'menu' : Menu(context, {'Main' : {}, 'Preferences' : {}}),
-	'testBtn' : Button("Test button", pos=(40, 300))
+	'testBtn' : Button("Test button", pos=(40, 300), func=test_func, func_params={'testing' : True})
 }
 
 context.add_merge_sprites(sprites)
