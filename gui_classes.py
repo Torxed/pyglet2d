@@ -61,7 +61,7 @@ class ScrollBar(Spr):
 		self.draw()
 
 class Button(Spr):
-	def __init__(self, text='Button', parent=None, x=None, y=None):
+	def __init__(self, text='Button', parent=None, x=None, y=None, func=None):
 		if parent and x is None: x = parent.x
 		elif x is None: x=0
 		if parent and y is None: y = parent.y
@@ -72,11 +72,19 @@ class Button(Spr):
 		self.parent = parent
 		self.x = x
 		self.y = y
+		self.func = func
 
 		self.sprites = {'1-title' : pyglet.text.Label(text, anchor_x='center', font_size=12, x=self.x+self.width/2, y=self.y+self.height-20, color=(255,0,0,255))}
 
 	# def move(self):
 	# 	return None
+
+	def click(self, x, y, merges):
+		print('Button got:', self.func)
+		if self.func:
+			self.func(x,y,merges)
+		else:
+			return None
 
 	def _draw(self):
 		self.draw()
@@ -145,6 +153,78 @@ class List(Spr):
 				self.draws[obj]._draw()
 
 		self.scrollbar._draw()
+
+class VertMenu(Spr):
+	def __init__(self, parent, width=None, buttons={}):
+		if not parent: return False
+
+		x = parent.x
+		y = parent.y+(20*len(buttons))
+
+		if not width:
+			width = parent.width
+
+		super(VertMenu, self).__init__(width=width, height=20*len(buttons), x=x, y=y, parent=parent)
+
+		self.buttons = buttons
+		self.parent = parent
+		self.visible = False
+
+		if self.visible:
+			self.sprites = {}
+			for obj in buttons:
+				self.sprites['2-' + obj] = buttons[obj]
+				self.sprites['2-' + obj].move_to(x, y)
+				y -= 20
+
+	def show(self, x=None, y=None):
+		if not x: x = self.parent.x
+		if not y: y = self.parent.y
+
+		self.x = x
+		self.y = y
+		y = y+20
+
+		self.sprites = {}
+		for obj in self.buttons:
+			self.sprites['2-' + obj] = self.buttons[obj]
+			self.sprites['2-' + obj].move_to(x, y)
+			y -= 24
+
+		self.visible = True
+
+	def click_check(self, x, y, button=None):
+		"""
+		When called, returns self (the object)
+		to the calling-origin as a verification
+		that we pressed inside this object, and
+		by sending back self (the object) the caller
+		can interact with this object
+		"""
+		for sname, sobj in self.sprites.items():
+			if type(sobj) == pyglet.text.Label: continue
+
+			check_sobj = sobj.click_check(x, y, button)
+			if check_sobj:
+				return check_sobj
+
+		if x > self.x and x < (self.x + self.width):
+			if y > self.y and y < (self.y + self.height):
+				return self
+
+		if button:
+			self.hide()
+
+	def hide(self):
+		self.visible = False
+
+	def _draw(self):
+		if not self.visible: return None
+
+		self.draw_header()
+		
+		for obj in sorted(self.sprites):
+			self.sprites[obj]._draw()
 
 class Menu(Spr):
 	def __init__(self, main_spr, buttons={}, align='top'):
