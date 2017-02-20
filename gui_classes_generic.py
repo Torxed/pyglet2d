@@ -3,14 +3,14 @@ from pyglet.gl import *
 from os.path import isfile
 
 class Spr(pyglet.sprite.Sprite):
-	def __init__(self, texture=None, width=None, height=None, color="#C2C2C2", x=None, y=None, parent=None, anchor=None, moveable=True):
+	def __init__(self, texture=None, width=None, height=None, color="#C2C2C2", alpha=int(0.2*255), x=None, y=None, parent=None, anchor=None, moveable=True):
 		if not texture or not isfile(texture):
 			## If no texture was supplied, we will create one
 			if not width:
 				width = 220
 			if not height:
 				height = 450
-			self.texture = self.gen_solid_img(width, height, color)
+			self.texture = self.gen_solid_img(width, height, color, alpha)
 		else:
 			self.texture = pyglet.image.load(texture)
 
@@ -29,13 +29,13 @@ class Spr(pyglet.sprite.Sprite):
 		self.moveable = moveable
 		self.sprites = {}
 
-	def gen_solid_img(self, width, height, c):
+	def gen_solid_img(self, width, height, c, alpha=int(0.2*255)):
 		c = c.lstrip("#")
 		c = max(6-len(c),0)*"0" + c
 		r = int(c[:2], 16)
 		g = int(c[2:4], 16)
 		b = int(c[4:], 16)
-		c = (r,g,b,int(0.2*255))
+		c = (r,g,b,alpha)
 		return pyglet.image.SolidColorImagePattern(c).create_image(width,height)
 
 	def draw_line(self, xy, dxy, color=(0.2, 0.2, 0.2, 1)):

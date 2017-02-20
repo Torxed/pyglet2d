@@ -38,6 +38,8 @@ class main(pyglet.window.Window):
 		self.active = None, None
 		self.alive = 1
 		self.multiselect = False
+		self.mouse_x = 0
+		self.mouse_y = 0
 
 	def on_draw(self):
 		self.render()
@@ -54,7 +56,7 @@ class main(pyglet.window.Window):
 
 	def add_merge_sprites(self, sprites):
 		for key, val in sprites.items():
-			self.sprites[key] = val
+			self.merge_sprites_dict[key] = val
 
 	def merge_sprites(self):
 		## We're using self.merge_sprites_dict here so that sub-items
@@ -70,8 +72,12 @@ class main(pyglet.window.Window):
 			#	self.sprites[merge_sprite[0]] = merge_sprite[1][1]
 			#else:
 			self.sprites[merge_sprite[0]] = merge_sprite[1]
+			## TODO: _active_ might be None.
+			self.pages[self.pages['_active_']].append(merge_sprite[0])
 
 	def on_mouse_motion(self, x, y, dx, dy):
+		self.mouse_x = x
+		self.mouse_y = y
 		for sprite_name, sprite in self.sprites.items():
 			if sprite:
 				sprite_obj = sprite.click_check(x, y)
@@ -227,8 +233,11 @@ class main(pyglet.window.Window):
 			if 'input' in self.sprites:
 				self.sprites['input']._draw()
 		else:
-			for sprite_name in self.pages[self.pages['_active_']]:
-				self.sprites[sprite_name]._draw()
+			for sprite_name in list(self.pages[self.pages['_active_']]):
+				try:
+					self.sprites[sprite_name]._draw()
+				except:
+					pass
 
 		#if 'msgbox' in self.sprites:
 		#	if self.sprites['msgbox']:

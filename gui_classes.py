@@ -61,7 +61,7 @@ class ScrollBar(Spr):
 		self.draw()
 
 class Button(Spr):
-	def __init__(self, text='Button', parent=None, x=None, y=None, func=None):
+	def __init__(self, text='Button', parent=None, x=None, y=None, func=None, func_params={}):
 		if parent and x is None: x = parent.x
 		elif x is None: x=0
 		if parent and y is None: y = parent.y
@@ -73,6 +73,7 @@ class Button(Spr):
 		self.x = x
 		self.y = y
 		self.func = func
+		self.func_params = func_params
 
 		self.sprites = {'1-title' : pyglet.text.Label(text, anchor_x='center', font_size=12, x=self.x+self.width/2, y=self.y+self.height-20, color=(255,0,0,255))}
 
@@ -82,7 +83,7 @@ class Button(Spr):
 	def click(self, x, y, merges):
 		print('Button got:', self.func)
 		if self.func:
-			self.func(x,y,merges)
+			self.func(x,y,merges,**self.func_params)
 		else:
 			return None
 
