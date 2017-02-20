@@ -60,6 +60,31 @@ class ScrollBar(Spr):
 		self.scroll_box._draw()
 		self.draw()
 
+class Button(Spr):
+	def __init__(self, text='Button', parent=None, x=None, y=None):
+		if parent and x is None: x = parent.x
+		elif x is None: x=0
+		if parent and y is None: y = parent.y
+		elif y is None: y=0
+		
+		super(Button, self).__init__(width=120, height=24, x=x, y=y, parent=parent)
+		
+		self.parent = parent
+		self.x = x
+		self.y = y
+
+		self.sprites = {'1-title' : pyglet.text.Label(text, anchor_x='center', font_size=12, x=self.x+self.width/2, y=self.y+self.height-20, color=(255,0,0,255))}
+
+	# def move(self):
+	# 	return None
+
+	def _draw(self):
+		self.draw()
+		for obj in sorted(self.sprites):
+			self.sprites[obj].draw()
+
+		self.draw_border()
+
 class List(Spr):
 	def __init__(self, main_spr, list_items={}, align='left', height=None, x=0, y=0):
 		if not height or height < 20:

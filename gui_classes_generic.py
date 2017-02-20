@@ -3,7 +3,7 @@ from pyglet.gl import *
 from os.path import isfile
 
 class Spr(pyglet.sprite.Sprite):
-	def __init__(self, texture=None, width=None, height=None, color="#C2C2C2", x=None, y=None, anchor=None, moveable=True):
+	def __init__(self, texture=None, width=None, height=None, color="#C2C2C2", x=None, y=None, parent=None, anchor=None, moveable=True):
 		if not texture or not isfile(texture):
 			## If no texture was supplied, we will create one
 			if not width:
@@ -25,7 +25,9 @@ class Spr(pyglet.sprite.Sprite):
 		if y:
 			self.y = y
 
+		self.parent = parent
 		self.moveable = moveable
+		self.sprites = {}
 
 	def gen_solid_img(self, width, height, c):
 		c = c.lstrip("#")
@@ -131,7 +133,7 @@ class Spr(pyglet.sprite.Sprite):
 		if self.opacity < 0:
 			self.opacity = 0
 
-	def click_check(self, x, y):
+	def click_check(self, x, y, button=None):
 		"""
 		When called, returns self (the object)
 		to the calling-origin as a verification
@@ -139,6 +141,13 @@ class Spr(pyglet.sprite.Sprite):
 		by sending back self (the object) the caller
 		can interact with this object
 		"""
+		for sname, sobj in self.sprites.items():
+			if type(sobj) == pyglet.text.Label: continue
+
+			check_sobj = sobj.click_check(x, y, button)
+			if check_sobj:
+				return check_sobj
+
 		if x > self.x and x < (self.x + self.width):
 			if y > self.y and y < (self.y + self.height):
 				return self
@@ -190,10 +199,29 @@ class Spr(pyglet.sprite.Sprite):
 	def gettext(self):
 		return ''
 
+	def move_to(self, x, y):
+		"""
+		Since we're moving the parent to a specific cordinate,
+		we've got to traverse through all children and update their
+		position as well. But before we do that we gotta meassure
+		the offset from the parents X,Y cordinates so that when we
+		place the child, it will retain the same offset.
+		"""
+		for sprite in self.sprites:
+			xlat = max(self.x, self.sprites[sprite].x) - min(self.x, self.sprites[sprite].x)
+			ylat = max(self.y, self.sprites[sprite].y) - min(self.y, self.sprites[sprite].y)
+			self.sprites[sprite].x = x+xlat
+			self.sprites[sprite].y = y+ylat
+		self.x = x
+		self.y = y
+
 	def move(self, x, y):
 		if self.moveable:
 			self.x += x
 			self.y += y
+			for sprite in self.sprites:
+				self.sprites[sprite].x += x
+				self.sprites[sprite].y += y
 
 	def _draw(self):
 		"""

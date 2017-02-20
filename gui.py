@@ -78,6 +78,7 @@ class main(pyglet.window.Window):
 				if sprite_obj:
 					sprite_obj.hover(x, y)
 				else:
+					#TODO: Check why not sprite_obj?
 					sprite.hover_out(x, y)
 
 	def link_objects(self, start, end):
@@ -107,7 +108,7 @@ class main(pyglet.window.Window):
 				##   link_objects( lines == ((x, y), (x, y)) )
 				self.link_objects(self.lines['link'][0], self.lines['link'][1])
 		elif button == 4:
-			if not self.active[0]:
+			if None in self.active:
 				pass #Do something on empty spaces?
 			else:
 				self.active[1].right_click(x, y, self.merge_sprites_dict)
@@ -122,23 +123,32 @@ class main(pyglet.window.Window):
 		if button == 1 or button == 4:
 			for sprite_name, sprite in self.sprites.items():
 				if sprite:
-					sprite_obj = sprite.click_check(x, y)
+					print('Clickchecking:', sprite, 'with button', button)
+					sprite_obj = sprite.click_check(x, y, button)
 					if sprite_obj:
 						if debug:
 							print('[DEBUG] Activating ' + sprite_name + '\'s object',sprite_obj)
+
 						self.active = sprite_name, sprite_obj
-						if button == 1:
-							if self.multiselect != False:
-								if sprite_name not in self.multiselect:
-										self.multiselect.append(sprite_name)
+						#if button == 1:
+						#	if self.multiselect != False:
+						#		if sprite_name not in self.multiselect:
+						#				self.multiselect.append(sprite_name)
 
 	def on_mouse_drag(self, x, y, dx, dy, button, modifiers):
 		self.drag = True
-		if self.active[1] and self.multiselect == False and hasattr(self.active[1], 'link'):
-			self.lines['link'] = ((self.active[1].x+(self.active[1].width/2), self.active[1].y+(self.active[1].height/2)), (x,y))
-		elif self.multiselect:
-			for obj in self.multiselect:
-				self.sprites[obj].move(dx, dy)
+
+		## Remake:
+		## - If the first object is moveable=False, do a connection.
+		#if self.active[1] and self.multiselect == False and hasattr(self.active[1], 'link'):
+		#	self.lines['link'] = ((self.active[1].x+(self.active[1].width/2), self.active[1].y+(self.active[1].height/2)), (x,y))
+		#elif self.multiselect:
+		#	for obj in self.multiselect:
+		#		self.sprites[obj].move(dx, dy)
+		if None not in self.active:
+			self.active[1].move(dx, dy)
+		#for obj in self.multiselect:
+		#	self.sprites[obj].move(dx, dy)
 
 	def on_key_release(self, symbol, modifiers):
 		if symbol == key.LCTRL:
