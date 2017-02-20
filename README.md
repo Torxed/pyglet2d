@@ -36,7 +36,7 @@ from PygletGui.gui_classes_generic import Spr
 class myWidget(Spr):
 	def __init__(self, title='Test', pos=(0,0), width=64, height=64):
 		if not title: return False
-		super(Computer, self).__init__(texture='object.png', width=width, height=height, x=pos[0], y=pos[1])
+		super(myWidget, self).__init__(texture='object.png', width=width, height=height, x=pos[0], y=pos[1])
 
 		self.sprites = {'1-title' : pyglet.text.Label(title, anchor_x='center', font_size=12, x=self.x+self.width/2, y=self.y+self.height-20)}
 
