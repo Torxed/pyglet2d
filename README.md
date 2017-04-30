@@ -9,60 +9,33 @@ Usage example
 Here's a quick demo of what you can do:
 
 ```Python
-import PygletGui.gui
-from PygletGui.gui_classes import *
+from pyglet_gui import *
 
-def test_func(*args, **kwargs):
-	print('Pressed a button:', args, kwargs)
-
-
-context = PygletGui.gui.main()
-
-sprites = {
-	'menu' : Menu(context, {'Main' : {}, 'Preferences' : {}}),
-	'testBtn' : Button("Test button", pos=(40, 300), func=test_func, func_params={'testing' : True})
-}
-
-context.add_merge_sprites(sprites)
-context.add_page('main', ['menu', 'testBtn'])
-context.swap_page('main')
-
-context.run()
-```
-
-And to build your own custom `widgets` (for a lack of better term, even tho I'm not particularly fond of that term), you can do this:
-
-```Python
-import PygletGui.gui
-from PygletGui.gui_classes import *
-from PygletGui.gui_classes_generic import Spr
-
-class myWidget(Spr):
-	def __init__(self, title='Test', pos=(0,0), width=64, height=64):
-		if not title: return False
-		super(myWidget, self).__init__(texture='object.png', width=width, height=height, x=pos[0], y=pos[1])
-
-		self.sprites = {'1-title' : pyglet.text.Label(title, anchor_x='center', font_size=12, x=self.x+self.width/2, y=self.y+self.height-20)}
-
-	def _draw(self):
-		self.draw()
-		#self.draw_header()
+class circle(generic_sprite):
+	def __init__(self, *args, **kwargs):
+		super(circle, self).__init__(*args, **kwargs)
+		self.circle = gfx_helpers.create_circle(self.x, self.y, batch=self.batch)
 		
-		for obj in sorted(self.sprites):
-			self.sprites[obj].draw()
+	def update(self):
+		## == Iterate through the vertices and move their
+		##    x and y coordinates accordingly.
+		##
+		new_vertices = []
+		x, y = randint(-1, 1), randint(-1, 1)
+		for index in range(0, len(self.circle['blob'].vertices),2):
+			old_x, old_y = self.circle['blob'].vertices[index:index+2]
+			new_vertices += [old_x+x, old_y+y]
+		self.circle['blob'].vertices = new_vertices
 
-		#self.draw_border()
+class window(main):
+	def __init__(self):
+		super(window, self).__init__(vsync=True, fps=True)
 
-context = PygletGui.gui.main()
+		## == Create 100 random circles that will float around in space.
 
-sprites = {
-	'menu' : Menu(context, {'Main' : {}, 'Preferences' : {}}),
-	'testBtn' : Button("Test button", pos=(40, 300)),
-	'myWidget1' : myWidget(),
-}
+		for i in range(100):
+			self.add_sprite('circle'+str(i), circle(x=int(self.width/2), y=int(self.height/2), alpha=0))
 
-context.add_merge_sprites(sprites)
-context.add_page('main', ['menu', 'testBtn', 'myWidget1'])
-context.swap_page('main')
-
-context.run()
+W = window()
+W.run()
+```
