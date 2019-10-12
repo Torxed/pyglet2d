@@ -9,6 +9,8 @@ Usage example
 Here's a quick demo of what you can do:<br>
 *(for more examples, see [test.py](/test.py))*
 
+![screenshot](screenshot.png)
+
 ```Python
 from pyglet_gui import *
 from random import randint
