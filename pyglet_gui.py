@@ -1,7 +1,8 @@
 import pyglet
+import urllib.request, io
 from pyglet.gl import *
 from collections import OrderedDict
-from os.path import isfile
+from os.path import isfile, basename
 from math import *
 from time import time
 from random import choice
@@ -30,6 +31,15 @@ class RenderError(Exception):
 	def __init__(self, message, errors=None):
 		super(RenderError, self).__init__(message)
 		self.errors = errors
+
+class resources():
+	def image_from_url(url, *args, **kwargs):
+		with urllib.request.urlopen(url) as response:
+			data = response.read()
+
+		fake_filehandle = io.BytesIO(data)
+		img = pyglet.image.load(basename(url), file=fake_filehandle)
+		return genericSprite(img, *args, **kwargs)
 
 class gfx():
 	colors = {
@@ -99,10 +109,13 @@ class ImageObject():
 			self.texture = self.generate_image(*args, **kwargs)
 		elif type(image) == str:
 			self.texture = pyglet.image.load(image)
+		elif type(image) == bytes:
+			raise RenderError("Not yet implemented, ImageObject doesnt handle raw bytes")
 		else:
 			self.texture = image
 
 		self.updated = False
+		self.batch = None
 
 	def generate_image(self, *args, **kwargs):
 		if not 'width' in kwargs or not 'height' in kwargs:
@@ -126,6 +139,12 @@ class ImageObject():
 			self.image = self.texture
 		else:
 			raise RenderError("Can not manipulate pixels on a empty ImageObject (initialize with width, height or texture first).")
+
+	def update(self):
+		pass
+
+	def pre_render(self):
+		pass
 
 	def render(self):
 		raise RenderError("Image object can't be drawn directly, wrap it in genericSprite()")
