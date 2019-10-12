@@ -4,6 +4,11 @@ PygletGui
 2D/GUI framework for Pyglet.<br>
 Create buttons, player objects or tiled backgrounds easily.
 
+Documentation
+=============
+
+ * [Wiki](https://github.com/Torxed/pyglet2d/wiki)
+
 Usage example
 =============
 
