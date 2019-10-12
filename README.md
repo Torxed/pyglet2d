@@ -1,7 +1,8 @@
 PygletGui
 =========
 
-GUI framework for Pyglet, one that's not hard to understand but you still get to build your custom gui.
+2D/GUI framework for Pyglet.<br>
+Create buttons, player objects or tiled backgrounds easily.
 
 Usage example
 =============
