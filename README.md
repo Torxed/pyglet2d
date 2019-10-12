@@ -10,6 +10,7 @@ Here's a quick demo of what you can do:
 
 ```Python
 from pyglet_gui import *
+from random import randint
 
 class circle(generic_sprite):
 	def __init__(self, *args, **kwargs):
