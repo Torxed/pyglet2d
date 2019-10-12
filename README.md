@@ -1,8 +1,8 @@
-PygletGui
+pyglet2d
 =========
 
-2D/GUI framework for Pyglet.<br>
-Create buttons, player objects or tiled backgrounds easily.
+Create 2D/GUI by wrapping pyglet functionality as transparent as possible.<br>
+Create buttons, player objects or tiled backgrounds easily. A generic 2D/GUI framework.
 
 Documentation
 =============
