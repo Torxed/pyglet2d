@@ -149,6 +149,18 @@ class ImageObject():
 	def render(self):
 		raise RenderError("Image object can't be drawn directly, wrap it in genericSprite()")
 
+class tiles():
+	def __init__(self, texture, width, height, batch=None):
+		if not batch: batch = pages['default']['batch']
+
+class animation():
+	def __init__(self, texture, frames, batch=None):
+		if not batch: batch = pages['default']['batch']
+
+class collision():
+	def __init__(self, texture, frames, batch=None):
+		if not batch: batch = pages['default']['batch']
+
 class genericSprite(ImageObject, pyglet.sprite.Sprite):
 	def __init__(self, texture=None, parent=None, moveable=True, batch=None, *args, **kwargs):
 		ImageObject.__init__(self, texture, *args, **kwargs)
