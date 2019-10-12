@@ -4,6 +4,7 @@ from collections import OrderedDict
 from os.path import isfile
 from math import *
 from time import time
+from random import choice
 
 import traceback
 import sys
@@ -25,6 +26,82 @@ class timer():
 		print('{text} took {time} to finish.'.format(**{'time' : time()-self.start, 'text' : text}))
 		self.start = time()
 
+class RenderError(Exception):
+	def __init__(self, message, errors=None):
+		super(RenderError, self).__init__(message)
+		self.errors = errors
+
+class ImageObject():
+	def __init__(self, image, *args, **kwargs):
+		if not image and 'height' in kwargs and 'width' in kwargs:
+			print('Generating texture')
+			self.texture = self.generate_image(*args, **kwargs)
+		elif type(image) == str:
+			self.texture = pyglet.image.load(image)
+		else:
+			self.texture = image
+
+		self.updated = False
+
+	def generate_image(self, *args, **kwargs):
+		if not 'width' in kwargs or not 'height' in kwargs:
+			raise RenderError("Can not create image texture without width and height.")
+		if not 'alpha' in kwargs: kwargs['alpha'] = 255
+		if not 'color' in kwargs:
+			colors = {
+				#'rasin_black' : '#271F30',
+				'umber' : '#6C5A49',
+				'vegas_gold' : '#C8AD55',
+				'tea_green' : '#D0FCB3',
+				'eton_blue' : '#9BC59D'
+			}
+			kwargs['color'] = colors[choice(list(colors.keys()))]
+		c = kwargs['color'].lstrip("#")
+		c = max(6-len(c),0)*"0" + c
+		r = int(c[:2], 16)
+		g = int(c[2:4], 16)
+		b = int(c[4:], 16)
+		c = (r,g,b,kwargs['alpha'])
+		return pyglet.image.SolidColorImagePattern(c).create_image(kwargs['width'], kwargs['height'])
+
+	def pixel(self, x, y, new_pixel):
+		if self.texture:
+			width = self.texture.width
+			data = self.texture.get_image_data().get_data('RGBA', width*4)
+
+			start = (width*4*y) + (x*4)
+			data = data[:start] + new_pixel + data[start+4:]
+
+			self.texture.set_data('RGBA', width*4, data)
+			self.image = self.texture
+		else:
+			raise RenderError("Can not manipulate pixels on a empty ImageObject (initialize with width, height or texture first).")
+
+	def render(self):
+		raise RenderError("Image object can't be drawn directly, wrap it in genericSprite()")
+
+class genericSprite(ImageObject, pyglet.sprite.Sprite):
+	def __init__(self, texture=None, parent=None, moveable=True, batch=None, *args, **kwargs):
+		ImageObject.__init__(self, texture, *args, **kwargs)
+		if self.texture:
+			sprite_kwargs = kwargs.copy()
+			for item in list(sprite_kwargs.keys()):
+				# List taken from: https://pyglet.readthedocs.io/en/stable/modules/sprite.html#pyglet.sprite.Sprite
+				if item not in ('img', 'x', 'y', 'blend_src', 'blend_dest', 'batch', 'group', 'usage', 'subpixel'):
+					del(sprite_kwargs[item])
+			pyglet.sprite.Sprite.__init__(self, self.texture, **sprite_kwargs)
+		else:
+			print(f'{self} has no texture, using dummy_draw()')
+			self.draw = self.dummy_draw
+
+	def update(self, *args, **kwargs):
+		pass
+
+	def pre_render(self, *args, **kwargs):
+		pass
+
+	def dummy_draw(self):
+		pass
 
 class gfx_manipulation():
 	def rotate(sprite_obj, rotation, anchor='center'):
@@ -38,7 +115,7 @@ class gfx_manipulation():
 
 class gfx_helpers():
 	def distance_between(source, target):
-		pass
+		return (source[0] - target[0], source[1] - target[1])
 
 	def angle_between(source, target):
 		source_angle = ((atan2(source[0], source[1])/pi*180)+360)%360
@@ -346,9 +423,9 @@ class fps_counter(generic_sprite):
 		self.lbl.draw()
 
 
-class main(pyglet.window.Window):
+class windowWrapper(pyglet.window.Window):
 	def __init__ (self, width=800, height=600, fps=False, *args, **kwargs):
-		super(main, self).__init__(width, height, *args, **kwargs)
+		super(windowWrapper, self).__init__(width, height, *args, **kwargs)
 		self.x, self.y = 0, 0
 
 		self.sprites = OrderedDict()
@@ -510,6 +587,9 @@ class main(pyglet.window.Window):
 		#elif symbol == key.LCTRL:
 		self.keys[symbol] = True
 
+	def post_setup(self):
+		pass
+
 	def pre_render(self):
 		pass
 
@@ -522,12 +602,14 @@ class main(pyglet.window.Window):
 		self.merge_sprites()
 		#t.stop('merge sprites')
 
+		self.sprites['smilyface'].draw()
+
 		if len(self.active_pages) <= 0:
 			## Fallback in case we've defunked all our pages,
 			## lets just print everything we got so the developer
 			## knows that he done fuck up somewhere :P
 			for sprite_name, sprite in self.sprites.items():
-				sprite._draw()
+				sprite.render()
 		else:
 			for page in self.active_pages.keys():
 				if not page in self.pages:
@@ -565,6 +647,8 @@ class main(pyglet.window.Window):
 		self.flip()
 
 	def run(self):
+		self.merge_sprites()
+		self.post_setup()
 		while self.alive == 1:
 			self.render()
 
