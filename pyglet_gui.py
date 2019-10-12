@@ -93,10 +93,6 @@ class gfx():
 		else:
 			return points
 
-class genericShape():
-	def __init__(self, *args, **kwargs):
-		pass
-
 class ImageObject():
 	def __init__(self, image, *args, **kwargs):
 		if not image and 'height' in kwargs and 'width' in kwargs:
@@ -159,6 +155,46 @@ class genericSprite(ImageObject, pyglet.sprite.Sprite):
 
 	def render(self):
 		self.draw()
+
+class simplified_GL_TRIANGLES():
+	def __init__(self):
+		self.colors = None
+
+	def move(self, dx, dy):
+		## == Iterate through the vertices and move their
+		##    x and y coordinates accordingly.
+		##
+		new_vertices = []
+		for index in range(0, len(self.vertices),2):
+			old_x, old_y = self.vertices[index:index+2]
+			new_vertices += [old_x+dx, old_y+dy]
+
+		self.vertices = new_vertices
+
+	def set_color(self, array):
+		self.colors = array
+
+	def pre_render(self):
+		if self.colors == None:
+			self.set_color((255,255,255)*int(len(self.vertices)/2))
+
+	def render(self):
+		pyglet.graphics.draw(int(len(self.vertices)/2), pyglet.gl.GL_TRIANGLES,
+			('v2i/stream', self.vertices),
+			('c3B', self.colors)
+		)
+
+class genericShape(simplified_GL_TRIANGLES, genericSprite):
+	def __init__(self, shapeType, *args, **kwargs):
+		genericSprite.__init__(self, *args, **kwargs)
+		if shapeType == 'GL_TRIANGLES':
+			simplified_GL_TRIANGLES.__init__(self)
+
+		self.circle = gfx.create_circle(kwargs['x'], kwargs['y'], batch=self.batch)
+		if self.batch:
+			self.vertices = self.circle['blob'].vertices
+		else:
+			self.vertices = self.circle
 
 class fps_counter(genericSprite):
 	def __init__(self, *args, **kwargs):
@@ -360,6 +396,7 @@ class windowWrapper(pyglet.window.Window):
 				for sprite_name, sprite_obj in self.pages[page]['sprites'].items():
 					sprite_obj.update()
 					if sprite_obj.batch == None:
+						sprite_obj.pre_render() # TODO: Might be a hogger
 						sprite_obj.render()
 				self.pages[page]['batch'].draw()
 				#t.stop('Updating + rendering sprites')
