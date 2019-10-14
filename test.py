@@ -36,6 +36,7 @@ class smilyface(genericSprite):
 class testButton(genericInteractive):
 	def __init__(self, *args, **kwargs):
 		if not 'theme' in kwargs: kwargs['theme'] = 'default'
+		if not 'debug' in kwargs: kwargs['debug'] = True
 		genericInteractive.__init__(self, *args, **kwargs)
 
 	def click(self, *args, **kwargs):
@@ -43,7 +44,7 @@ class testButton(genericInteractive):
 
 class window(windowWrapper):
 	def __init__(self):
-		super(window, self).__init__(vsync=True, fps=True)
+		super(window, self).__init__(vsync=False, fps=True)
 
 		self.add_sprite('circle', circle(x=int(self.width/2), y=int(self.height/2), alpha=0))
 		self.add_sprite('smilyface', smilyface(x=100, y=100, width=20, height=20, alpha=0))

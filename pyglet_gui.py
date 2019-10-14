@@ -106,7 +106,7 @@ class ImageObject():
 		self.batch = kwargs['batch']
 		self.updated = False
 
-		if not image and 'height' in kwargs and 'width' in kwargs:
+		if not image and 'height' in kwargs and 'width' in kwargs and ('_noBackdrop' not in kwargs or kwargs['_noBackdrop'] == False):
 			self.texture = self.generate_image(*args, **kwargs)
 		elif type(image) == str:
 			self.texture = pyglet.image.load(image)
@@ -166,11 +166,20 @@ class ImageObject():
 #	def __init__(self, texture, frames, batch=None):
 #		if not batch: batch = pages['default']['batch']
 
+class dummyTexture():
+	def __init__(self, width, height):
+		self.width = width
+		self.height = height
+		self.anchor_x = 0
+		self.anchor_y = 0
+
 class genericSprite(ImageObject, pyglet.sprite.Sprite):
 	def __init__(self, texture=None, parent=None, moveable=True, *args, **kwargs):
 		if not 'x' in kwargs: kwargs['x'] = 0
 		if not 'y' in kwargs: kwargs['y'] = 0
+		if not 'debug' in kwargs: kwargs['debug'] = False
 		if not 'batch' in kwargs: kwargs['batch'] = pyglet.graphics.Batch()
+		self.debug = kwargs['debug']
 
 		ImageObject.__init__(self, texture, *args, **kwargs)
 
@@ -186,6 +195,9 @@ class genericSprite(ImageObject, pyglet.sprite.Sprite):
 			pyglet.sprite.Sprite.__init__(self, self.texture, **sprite_kwargs)
 		else:
 			self.draw = self.dummy_draw
+			self._x = kwargs['x']
+			self._y = kwargs['y']
+			self._texture = dummyTexture(kwargs['width'], kwargs['height'])
 			#self.render = self.dummy_draw
 			#self.x = kwargs['x']
 			#self.y = kwargs['y']
@@ -199,6 +211,29 @@ class genericSprite(ImageObject, pyglet.sprite.Sprite):
 	def dummy_draw(self):
 		pass
 
+	def move(self, dx, dy):
+		print('Moving:', self)
+		self.x += dx
+		self.y += dy
+		for sprite in self.sprites:
+			self.sprites[sprite].x += dx
+			self.sprites[sprite].y += dy
+
+	def hover(self, x, y):
+		pass
+
+	def hover_out(self, x, y):
+		pass
+
+	def mouse_inside(self, x, y, mouse_button=None):
+		if self.debug:
+			print(f'Inside: {self}, {x,y}, {self.width, self.height}')
+		if x >= self.x and y >= self.y:
+			if x <= self.x+self.width and y <= self.y+self.height:
+				if self.debug:
+					print('   yes')
+				return self
+
 	def render(self):
 		self.batch.draw()
 #		self.draw()
@@ -208,8 +243,6 @@ class themedObject():
 		if not 'theme' in kwargs: kwargs['theme'] = 'default'
 		if not 'width' in kwargs: raise RenderError("No width to the theme engine.")
 		if not 'height' in kwargs: raise RenderError("No height to the theme engine.")
-
-		print(kwargs)
 
 		border = (
 			kwargs['x']-10, kwargs['y']-10,
@@ -225,23 +258,25 @@ class themedObject():
 			kwargs['x']-10, kwargs['y']-10
 		)
 
-		print(border)
-
 		colors = (255,255,255,255) * int(len(border)/2)
 
 		self._list = self.batch.add(int(len(border)/2), gl.GL_LINES, None, 
-            ('v2f/stream', border), ('c4B', colors)
-        )
+			('v2f/stream', border), ('c4B', colors)
+		)
 
 class genericInteractive(genericSprite, themedObject):
 	def __init__(self, *args, **kwargs):
 		if not 'label' in kwargs: kwargs['label'] = ''
-		genericSprite.__init__(self, *args, **kwargs)
 		if not 'height' in kwargs: kwargs['height'] = 20
 		if not 'width' in kwargs: kwargs['width'] = len(kwargs['label'])
+		if not '_noBackdrop' in kwargs: kwargs['_noBackdrop'] = True
+		genericSprite.__init__(self, *args, **kwargs)
 		if 'theme' in kwargs:
 			themedObject.__init__(self, kwargs, *args, **kwargs)
 		self.sprites['label'] = pyglet.text.Label(kwargs['label'], x=kwargs['x'], y=kwargs['y'], batch=self.batch)
+
+	def move(self, dx, dy):
+		print(self._list)
 
 #	def render(self):
 #		self.label.draw()
@@ -252,16 +287,16 @@ class simplified_GL_TRIANGLES():
 		## TODO: Investigate why `def render()` won't trigger if `self.render` already set...
 		## Apparently: https://docs.python.org/3/reference/datamodel.html#descriptors
 		## 11:32 < Widdershins> DoXiD: func exists as a class method, but you're setting an attribute with the same name on the instance during 
-        ##             init, self.func. instance attributes are seen before class attributes (like methods).
-        ##
-        ## 11:37 < Widdershins> DoXiD: no. the object instance's attributes are in a completely different place than the class methods, and will 
-        ##             always override. try putting func = dummy_func in the body of inherited instead of the __init__, or try looking at 
-        ##             dir(x).
-        ##
-        ## 11:39 < cdunklau> DoXiD: the method magic happens because of descriptors. https://docs.python.org/3/reference/datamodel.html#descriptors 
-        ##          for the gory details
-        ##
-        ## 11:39 < Widdershins> DoXiD: you're setting a field of the object that shadows the name of a method it has, to put it briefly
+		##             init, self.func. instance attributes are seen before class attributes (like methods).
+		##
+		## 11:37 < Widdershins> DoXiD: no. the object instance's attributes are in a completely different place than the class methods, and will 
+		##             always override. try putting func = dummy_func in the body of inherited instead of the __init__, or try looking at 
+		##             dir(x).
+		##
+		## 11:39 < cdunklau> DoXiD: the method magic happens because of descriptors. https://docs.python.org/3/reference/datamodel.html#descriptors 
+		##          for the gory details
+		##
+		## 11:39 < Widdershins> DoXiD: you're setting a field of the object that shadows the name of a method it has, to put it briefly
 		##
 		## 11:39 < Widdershins> DoXiD: if you `del c
 		##
@@ -296,11 +331,15 @@ class simplified_GL_TRIANGLES():
 
 class genericShape(simplified_GL_TRIANGLES, genericSprite):
 	def __init__(self, shapeType, *args, **kwargs):
+		kwargs['width'] = 50
+		kwargs['height'] = 50
+		kwargs['_noBackdrop'] = True
 		genericSprite.__init__(self, *args, **kwargs)
+
 		if shapeType == 'GL_TRIANGLES':
 			simplified_GL_TRIANGLES.__init__(self, *args, **kwargs)
 
-		self.circle = gfx.create_circle(kwargs['x'], kwargs['y'], batch=None)
+		self.circle = gfx.create_circle(kwargs['x'], kwargs['y'], batch=None, radius=25)
 		#if self.batch:
 		#	self.vertices = self.circle['blob'].vertices
 		#else:
@@ -322,9 +361,6 @@ class fps_counter(genericInteractive):
 			self.sprites['label'].text = str(self.fps) + 'fps'
 			self.fps = 0
 			self.last_udpate = time()
-		
-		#self.label.draw()
-
 
 class windowWrapper(pyglet.window.Window):
 	def __init__ (self, width=800, height=600, fps=False, *args, **kwargs):
