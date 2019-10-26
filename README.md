@@ -9,6 +9,23 @@ Documentation
 
  * [Wiki](https://github.com/Torxed/pyglet2d/wiki)
 
+Some useful quick links below:
+
+ * [window](https://github.com/Torxed/pyglet2d/wiki/window)
+ * [camera](https://github.com/Torxed/pyglet2d/wiki/camera)
+
+2d objects:
+
+ * [genericSprite](https://github.com/Torxed/pyglet2d/wiki/genericSprite)
+
+Below are helper functions:
+
+ * <strike>[animation]()</strike>
+ * <strike>[collision]()</strike>
+ * <strike>[gfx]() - Helper functions for graphical applications</strike>
+ * [resources](https://github.com/Torxed/pyglet2d/wiki/resources) - Helper functions for resource management'
+   * [resources.image_from_url](https://github.com/Torxed/pyglet2d/wiki/resources#resourcesimage_from_urlurl-args-kwargs) - Creates `Sprite()` from a `HTTP`/`HTTPS` image resource
+
 Usage example
 =============
 

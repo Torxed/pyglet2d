@@ -120,6 +120,10 @@ class dummyTexture():
 	def get_texture(self, *args, **kwargs):
 		return self
 
+	def rotate(self, deg):
+		self.tex_coords = (0, 0, 0, 0, 0, 0, 0, 0)
+		self._vertex_list.vertex[:]
+
 class ImageObject():
 	def __init__(self, image, *args, **kwargs):
 		if not 'batch' in kwargs: kwargs['batch'] = pyglet.graphics.Batch()
