@@ -86,3 +86,21 @@ genericShape(shapeType='GL_TRIANGLES')
 
 Generic shape handler, create `GL_` vertices quicker and easier for simpler things.<br>
 Won't handle advanced shapes but will let you work with simpler objects (circles, triangles, squares) as if they were sprites.
+
+Camera movement
+===============
+
+Camera movements are built-in to the window. Simply using `self.camera` will get you what you want.
+
+```python
+class window(windowWrapper):
+	def __init__(self):
+		super(window, self).__init__(vsync=False, fps=True)
+
+		self.add_sprite('button', genericInteractive(label='Click me', x=64, y=self.height-64))
+
+	def key_W(self, symbol, event, modifiers, *args, **kwargs):
+		self.camera.move(0, 1)
+```
+
+This will move the camera whenever <kbd>W</kbd> is pressed.
