@@ -36,7 +36,7 @@ class resources():
 	def image_from_url(url, *args, **kwargs):
 		with urllib.request.urlopen(url) as response:
 			data = response.read()
-		return genericSprite(ImageObject(io.BytesIO(data), path=url), *args, **kwargs)
+		return genericSprite(ImageObject(io.BytesIO(data), debug=True, path=url), debug=True, *args, **kwargs)
 
 class gfx():
 	colors = {
@@ -101,7 +101,12 @@ class gfx():
 			return points
 
 class dummyTexture():
-	def __init__(self, width, height):
+	def __init__(self, width, height, *args, **kwargs):
+		if not 'debug' in kwargs: kwargs['debug'] = False
+		self.debug = kwargs['debug']
+
+		if self.debug:
+			print('Initiating dummyTexture()')
 		self.width = 0
 		self.height = 0
 		self.anchor_x = 0
@@ -162,7 +167,7 @@ class ImageObject():
 
 			self._x = kwargs['x']
 			self._y = kwargs['y']
-			self.texture = dummyTexture(kwargs['width'], kwargs['height'])
+			self.texture = dummyTexture(*args, **kwargs)
 			self._texture = self.texture.get_texture()
 			self.batch = kwargs['batch']
 
@@ -172,6 +177,8 @@ class ImageObject():
 			raise RenderError("Can not create image texture without width and height.")
 		if not 'alpha' in kwargs: kwargs['alpha'] = 255
 		if not 'color' in kwargs: kwargs['color'] = gfx.colors[choice(list(gfx.colors.keys()))]
+		if 'debug' in kwargs and kwargs['debug']:
+			print(f'{self}: generate_image({kwargs})')
 		
 		c = gfx.hex_to_colorpair(kwargs['color'])
 		
@@ -235,7 +242,7 @@ class genericSprite(ImageObject, pyglet.sprite.Sprite):
 			self.draw = self.dummy_draw
 			self._x = kwargs['x']
 			self._y = kwargs['y']
-			self._texture = dummyTexture(kwargs['width'], kwargs['height'])
+			self._texture = dummyTexture(kwargs['width'], kwargs['height'], *args, **kwargs)
 			#moo = pyglet.sprite.Sprite(self.generate_image(*args, **kwargs))
 			self.batch = kwargs['batch']
 			#self.render = self.dummy_draw
