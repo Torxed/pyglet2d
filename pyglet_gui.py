@@ -441,6 +441,8 @@ class windowWrapper(pyglet.window.Window):
 
 		self.alive = 1
 
+		glClearColor(0/255, 0/255, 0/255, 0/255)
+
 	def on_draw(self):
 		self.render()
 
@@ -573,7 +575,20 @@ class windowWrapper(pyglet.window.Window):
 
 	def render(self):
 		#t = timer()
-		self.clear()
+		#self.clear()
+		glClear( GL_COLOR_BUFFER_BIT )
+
+		# Initialize Projection matrix
+		glMatrixMode( GL_PROJECTION )
+		glLoadIdentity()
+
+		# Initialize Modelview matrix
+		glMatrixMode( GL_MODELVIEW )
+		glLoadIdentity()
+
+		# Set orthographic projection matrix
+		glOrtho(0, self.width, 0, self.height, 1, -1 )
+
 		self.pre_render()
 		self.merge_sprites()
 		#t.stop('merge sprites')
