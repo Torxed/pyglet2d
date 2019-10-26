@@ -413,6 +413,31 @@ class fps_counter(genericInteractive):
 			self.fps = 0
 			self.last_udpate = time()
 
+class camera():
+	# http://docs.gl/gl2/glOrtho
+	def __init__(self, x, y, width=None, height=None, parent=None, *args, **kwargs):
+		if not 'debug' in kwargs: kwargs['debug'] = False
+		if (not width or not height) and not parent:
+			raise RenderError("Can not create a camera with no width/height and no parent.\n  Either set width/height OR supply a parent to the camera.")
+		if not width: width = parent.width
+		if not height: height = parent.height
+
+		self.parent = parent
+		self.x = x
+		self.y = y
+		self.width = width
+		self.height = height
+
+		self.debug = kwargs['debug']
+
+	def __iter__(self):
+		return iter([self.x, self.x+self.width, self.y, self.y+self.height])
+
+	def move(self, dx, dy):
+		self.x += dx
+		self.y += dy
+		#print(f'Camera moved to: {self.x,self.y} x {self.width, self.height}')
+
 class windowWrapper(pyglet.window.Window):
 	def __init__ (self, width=800, height=600, fps=False, *args, **kwargs):
 		super(windowWrapper, self).__init__(width, height, *args, **kwargs)
@@ -441,6 +466,7 @@ class windowWrapper(pyglet.window.Window):
 
 		self.alive = 1
 
+		self.camera = camera(0, 0, parent=self)
 		glClearColor(0/255, 0/255, 0/255, 0/255)
 
 	def on_draw(self):
@@ -564,14 +590,19 @@ class windowWrapper(pyglet.window.Window):
 	def on_key_press(self, symbol, modifiers):
 		if symbol == key.ESCAPE: # [ESC]
 			self.alive = 0
-		#elif symbol == key.LCTRL:
-		self.keys[symbol] = True
+
+		func = getattr(self, f'key_{key.symbol_string(symbol)}', None)
+		if callable(func):
+			self.keys[symbol] = {'func' : func, 'params' : (symbol, 'press', modifiers)}
+		else:
+			self.keys[symbol] = None
 
 	def post_setup(self):
 		pass
 
 	def pre_render(self):
-		pass
+		for key, val in self.keys.items():
+			if val: val['func']( *val['params'] )
 
 	def render(self):
 		#t = timer()
@@ -587,7 +618,7 @@ class windowWrapper(pyglet.window.Window):
 		glLoadIdentity()
 
 		# Set orthographic projection matrix
-		glOrtho(0, self.width, 0, self.height, 1, -1 )
+		glOrtho(*self.camera, 1, -1 )
 
 		self.pre_render()
 		self.merge_sprites()

@@ -1,4 +1,5 @@
 #from pgui import *
+from pyglet.gl import *
 from pyglet_gui import *
 from random import randint
 
@@ -50,6 +51,18 @@ class window(windowWrapper):
 		self.add_sprite('smilyface', smilyface(x=100, y=100, width=20, height=20, alpha=0))
 		self.add_sprite('webimage', resources.image_from_url('https://hvornum.se/favicon.ico', x=self.width-64, y=self.height-64))
 		self.add_sprite('button', testButton(debug=True, label='Click me', x=64, y=self.height-64))
+
+	def key_W(self, symbol, event, modifiers, *args, **kwargs):
+		self.camera.move(0, 1)
+
+	def key_S(self, symbol, event, modifiers, *args, **kwargs):
+		self.camera.move(0, -1)
+
+	def key_D(self, symbol, event, modifiers, *args, **kwargs):
+		self.camera.move(1, 0)
+
+	def key_A(self, symbol, event, modifiers, *args, **kwargs):
+		self.camera.move(-1, 0)
 
 W = window()
 W.run()
