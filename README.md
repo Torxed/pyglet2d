@@ -79,3 +79,10 @@ class themedObject(theme='default')
 
 Inheriting this class will try to wrap whatever the parent object is, in a theme of sorts.<br>
 This means adding borders, `on_hover` events and possibly backdrops or images as the background. Much like `CSS` to already existing elements in HTML.
+
+```python
+genericShape(shapeType='GL_TRIANGLES')
+```
+
+Generic shape handler, create `GL_` vertices quicker and easier for simpler things.<br>
+Won't handle advanced shapes but will let you work with simpler objects (circles, triangles, squares) as if they were sprites.
