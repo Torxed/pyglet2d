@@ -36,7 +36,7 @@ class resources():
 	def image_from_url(url, *args, **kwargs):
 		with urllib.request.urlopen(url) as response:
 			data = response.read()
-		return genericSprite(ImageObject(io.BytesIO(data), debug=True, path=url), debug=True, *args, **kwargs)
+		return genericSprite(ImageObject(io.BytesIO(data), path=url), *args, **kwargs)
 		# return genericSprite(io.BytesIO(data), path=url, debug=True, *args, **kwargs)
 
 class gfx():
@@ -139,28 +139,18 @@ class ImageObject():
 			#self._texture = self.texture.get_texture()
 		elif type(image) == io.BytesIO:
 			if self.debug:
-				print(self, 'Loading bytes stream')
+				print(self, 'Loading bytes stream io.bytes')
 			self.texture = pyglet.image.load(basename(kwargs['path']), file=image)
 			#self._texture = self.texture.get_texture()
 		elif type(image) == bytes:
-			raise RenderError("Not yet implemented, ImageObject doesnt handle raw bytes, yet.")
+			if self.debug:
+				print(self, 'Loading bytes stream from bytes')
+			tmp = io.BytesIO(image)
+			self.texture = pyglet.image.load(basename(kwargs['path']), file=tmp)
 		elif type(image) == ImageObject:
 			if self.debug:
 				print(self, 'Merging ImageObject')
 			self.texture = image.texture
-			## TODO: Investigate if we really need all these:
-			# self.texture = image.texture
-			# self.batch = image.batch
-			# try:
-			#	kwargs['batch'] = image.batch
-			# except:
-			#	pass # TODO: Failed to migrate batch, why?
-			# self.updated = image.updated
-			# try:
-			#	self._texture = image._texture
-			# except:
-			#	self._texture = self.texture.get_texture()
-			# self.batch = kwargs['batch']
 		else:
 			if self.debug:
 				print(self, 'Dummy ImageObject')
