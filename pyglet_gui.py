@@ -227,8 +227,14 @@ class genericSprite(ImageObject, pyglet.sprite.Sprite):
 				# List taken from: https://pyglet.readthedocs.io/en/stable/modules/sprite.html#pyglet.sprite.Sprite
 				if item not in ('img', 'x', 'y', 'blend_src', 'blend_dest', 'batch', 'group', 'usage', 'subpixel'):
 					del(sprite_kwargs[item])
+			if self.debug:
+				print(f'{self}: Creating a Sprite({sprite_kwargs})')
 			pyglet.sprite.Sprite.__init__(self, self.texture, **sprite_kwargs)
+			if 'width' in kwargs: self.resize(width=kwargs['width'])
+			if 'height' in kwargs: self.resize(height=kwargs['height'])
 		else:
+			if self.debug:
+				print(f'{self}: Creating a dummy Sprite({kwargs})')
 			self.draw = self.dummy_draw
 			self._x = kwargs['x']
 			self._y = kwargs['y']
@@ -238,6 +244,12 @@ class genericSprite(ImageObject, pyglet.sprite.Sprite):
 			#self.render = self.dummy_draw
 			#self.x = kwargs['x']
 			#self.y = kwargs['y']
+
+	def resize(self, width=None, height=None, *args, **kwargs):
+		if width:
+			self._texture.width = width
+		if height:
+			self._texture.height = height
 
 	def update(self, *args, **kwargs):
 		pass
@@ -264,7 +276,9 @@ class genericSprite(ImageObject, pyglet.sprite.Sprite):
 
 	def mouse_inside(self, x, y, mouse_button=None):
 		if self.debug:
-			print(f'Inside: {self}, {x,y}, {self.width, self.height}')
+			print(f'Inside: {self}, {x, y} | {self.x,self.y}, {self.width, self.height}')
+			print(f' {x >= self.x} and {y >= self.y}')
+			print(f'   {x <= self.x+self.width} and {y <= self.y+self.height}')
 		if x >= self.x and y >= self.y:
 			if x <= self.x+self.width and y <= self.y+self.height:
 				if self.debug:
@@ -305,7 +319,7 @@ class genericInteractive(genericSprite, themedObject):
 	def __init__(self, *args, **kwargs):
 		if not 'label' in kwargs: kwargs['label'] = ''
 		if not 'height' in kwargs: kwargs['height'] = 20
-		if not 'width' in kwargs: kwargs['width'] = len(kwargs['label'])
+		if not 'width' in kwargs: kwargs['width'] = len(kwargs['label'])*8
 		if not '_noBackdrop' in kwargs: kwargs['_noBackdrop'] = True
 		genericSprite.__init__(self, *args, **kwargs)
 		if 'theme' in kwargs:
@@ -520,6 +534,7 @@ class windowWrapper(pyglet.window.Window):
 				if sprite:
 					print('Clickchecking:', sprite, 'with button', button)
 					sprite_obj = sprite.mouse_inside(x, y, button)
+					print(sprite_obj)
 					if sprite_obj:
 						print('[DEBUG] Activating {name}\'s object: {obj}'.format(**{'name' : sprite_name, 'obj' : sprite_obj}))
 						self.active[sprite_name] = sprite_obj
