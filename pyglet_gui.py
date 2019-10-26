@@ -262,9 +262,22 @@ class genericSprite(ImageObject, pyglet.sprite.Sprite):
 	def dummy_draw(self):
 		pass
 
-	def rotate(self, deg):
+	def rotate(self, deg, adjust_anchor=True):
+		anchors = self._texture.anchor_x, self._texture.anchor_y
+		if(anchors == (0, 0) and adjust_anchor):
+			x,y = self.x, self.y
+			self.x = x + (self.width/2)
+			self.y = y + (self.height/2)
+
+		if adjust_anchor:
+			self._texture.anchor_x = self.width / 2
+			self._texture.anchor_y = self.height / 2
+
 		self._rot = (self._rot + deg) % 360
 		self.rotation = self._rot
+
+		#self._texture.anchor_x, self._texture.anchor_y = anchors
+		
 
 	def move(self, dx, dy):
 		print('Moving:', self)
