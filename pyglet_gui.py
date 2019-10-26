@@ -100,27 +100,72 @@ class gfx():
 		else:
 			return points
 
+class dummyTexture():
+	def __init__(self, width, height):
+		self.width = 0
+		self.height = 0
+		self.anchor_x = 0
+		self.anchor_y = 0
+		#self.tex_coords = (0.0, 0.0, 0.0, 0.9375, 0.0, 0.0, 0.9375, 0.9375, 0.0, 0.0, 0.9375, 0.0)
+		self.tex_coords = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+		self.id = 1
+		self.target = 3553
+
+	def get_texture(self, *args, **kwargs):
+		return self
+
 class ImageObject():
 	def __init__(self, image, *args, **kwargs):
 		if not 'batch' in kwargs: kwargs['batch'] = pyglet.graphics.Batch()
-		self.batch = kwargs['batch']
+		if not 'debug' in kwargs: kwargs['debug'] = False
 		self.updated = False
+		self.debug = kwargs['debug']
 
 		if not image and 'height' in kwargs and 'width' in kwargs and ('_noBackdrop' not in kwargs or kwargs['_noBackdrop'] == False):
+			if self.debug:
+				print(self, 'Generating image', kwargs)
 			self.texture = self.generate_image(*args, **kwargs)
+			#self._texture = self.texture.get_texture()
 		elif type(image) == str:
+			if self.debug:
+				print(self, 'Loading file')
 			self.texture = pyglet.image.load(image)
+			#self._texture = self.texture.get_texture()
 		elif type(image) == io.BytesIO:
+			if self.debug:
+				print(self, 'Loading bytes stream')
 			self.texture = pyglet.image.load(basename(kwargs['path']), file=image)
+			#self._texture = self.texture.get_texture()
 		elif type(image) == bytes:
 			raise RenderError("Not yet implemented, ImageObject doesnt handle raw bytes, yet.")
 		elif type(image) == ImageObject:
+			if self.debug:
+				print(self, 'Merging ImageObject')
 			self.texture = image.texture
-			self.batch = image.batch
+			#self.batch = image.batch
+			try:
+				kwargs['batch'] = image.batch
+			except:
+				pass # TODO: Failed to migrate batch, why?
 			self.updated = image.updated
+			try:
+				self._texture = image._texture
+			except:
+				self._texture = self.texture.get_texture()
+			self.batch = kwargs['batch']
 		else:
-			self.texture = None
-#			raise RenderError("Can not set ImageObject.texture to None.")
+			if self.debug:
+				print(self, 'Dummy ImageObject')
+
+			#x = self.generate_image(*args, **kwargs)
+			#print(x.get_texture().id)
+
+			self._x = kwargs['x']
+			self._y = kwargs['y']
+			self.texture = dummyTexture(kwargs['width'], kwargs['height'])
+			self._texture = self.texture.get_texture()
+			self.batch = kwargs['batch']
+
 
 	def generate_image(self, *args, **kwargs):
 		if not 'width' in kwargs or not 'height' in kwargs:
@@ -166,13 +211,6 @@ class ImageObject():
 #	def __init__(self, texture, frames, batch=None):
 #		if not batch: batch = pages['default']['batch']
 
-class dummyTexture():
-	def __init__(self, width, height):
-		self.width = width
-		self.height = height
-		self.anchor_x = 0
-		self.anchor_y = 0
-
 class genericSprite(ImageObject, pyglet.sprite.Sprite):
 	def __init__(self, texture=None, parent=None, moveable=True, *args, **kwargs):
 		if not 'x' in kwargs: kwargs['x'] = 0
@@ -183,7 +221,7 @@ class genericSprite(ImageObject, pyglet.sprite.Sprite):
 
 		ImageObject.__init__(self, texture, *args, **kwargs)
 
-		self.batch = kwargs['batch']
+		#self.batch = kwargs['batch']
 		self.sprites = {}
 
 		if self.texture:
@@ -198,6 +236,8 @@ class genericSprite(ImageObject, pyglet.sprite.Sprite):
 			self._x = kwargs['x']
 			self._y = kwargs['y']
 			self._texture = dummyTexture(kwargs['width'], kwargs['height'])
+			#moo = pyglet.sprite.Sprite(self.generate_image(*args, **kwargs))
+			self.batch = kwargs['batch']
 			#self.render = self.dummy_draw
 			#self.x = kwargs['x']
 			#self.y = kwargs['y']
@@ -470,7 +510,7 @@ class windowWrapper(pyglet.window.Window):
 		elif button == 4:
 			for sprite_name, sprite in self.sprites.items():
 				if sprite:
-					#print('Clickchecking:', sprite, 'with button', button)
+					print('Clickchecking:', sprite, 'with button', button)
 					sprite_obj = sprite.mouse_inside(x, y, button)
 					if sprite_obj:
 						print('[DEBUG] Right clicking inside {name}\'s object: {obj}'.format(**{'name' : sprite_name, 'obj' : sprite_obj}))
@@ -481,7 +521,7 @@ class windowWrapper(pyglet.window.Window):
 		if button == 1:
 			for sprite_name, sprite in self.sprites.items():
 				if sprite:
-					#print('Clickchecking:', sprite, 'with button', button)
+					print('Clickchecking:', sprite, 'with button', button)
 					sprite_obj = sprite.mouse_inside(x, y, button)
 					if sprite_obj:
 						print('[DEBUG] Activating {name}\'s object: {obj}'.format(**{'name' : sprite_name, 'obj' : sprite_obj}))
