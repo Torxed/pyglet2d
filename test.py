@@ -52,6 +52,9 @@ class window(windowWrapper):
 		self.add_sprite('webimage', resources.image_from_url('https://hvornum.se/favicon.ico', x=self.width-64, y=self.height-64))
 		self.add_sprite('button', testButton(debug=True, label='Click me', x=64, y=self.height-64))
 
+	def key_R(self, *args, **kwargs):
+		self.sprites['webimage'].rotate(1)
+
 	def key_W(self, symbol, event, modifiers, *args, **kwargs):
 		self.camera.move(0, 1)
 

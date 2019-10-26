@@ -245,6 +245,8 @@ class genericSprite(ImageObject, pyglet.sprite.Sprite):
 			#self.x = kwargs['x']
 			#self.y = kwargs['y']
 
+		self._rot = 0
+
 	def resize(self, width=None, height=None, *args, **kwargs):
 		if width:
 			self._texture.width = width
@@ -259,6 +261,10 @@ class genericSprite(ImageObject, pyglet.sprite.Sprite):
 
 	def dummy_draw(self):
 		pass
+
+	def rotate(self, deg):
+		self._rot = (self._rot + deg) % 360
+		self.rotation = self._rot
 
 	def move(self, dx, dy):
 		print('Moving:', self)
@@ -295,18 +301,34 @@ class themedObject():
 		if not 'width' in kwargs: raise RenderError("No width to the theme engine.")
 		if not 'height' in kwargs: raise RenderError("No height to the theme engine.")
 
+		if not 'style' in kwargs: kwargs['style'] = {
+			'padding' : 0
+		}
+		if not 'themes' in kwargs: kwargs['themes'] = {
+			'default' : {
+				'padding' : 10
+			}
+		}
+
+		if kwargs['theme'] in kwargs['themes']:
+			for key, val in kwargs['themes'][kwargs['theme']].items():
+				kwargs['style'][key] = val
+
+		#if 'border' in kwargs['style']:
+
+
 		border = (
-			kwargs['x']-10, kwargs['y']-10,
-			kwargs['x']-10+(kwargs['width']*10.5), kwargs['y']-10,
+			self.x-kwargs['style']['padding'], self.y-kwargs['style']['padding'],
+			(self.x-kwargs['style']['padding'])+kwargs['width']+(kwargs['style']['padding']*2), self.y-kwargs['style']['padding'],
 
-			kwargs['x']-10+(kwargs['width']*10.5), kwargs['y']-10,
-			kwargs['x']-10+(kwargs['width']*10.5), kwargs['y']+(kwargs['height']),
+			(self.x-kwargs['style']['padding'])+kwargs['width']+(kwargs['style']['padding']*2), self.y-kwargs['style']['padding'],
+			(self.x-kwargs['style']['padding'])+kwargs['width']+(kwargs['style']['padding']*2), self.y+kwargs['height'],
 			
-			kwargs['x']-10+(kwargs['width']*10.5), kwargs['y']+(kwargs['height']),
-			kwargs['x']-10, kwargs['y']+(kwargs['height']),
+			(self.x-kwargs['style']['padding'])+kwargs['width']+(kwargs['style']['padding']*2), self.y+kwargs['height'],
+			self.x-kwargs['style']['padding'], self.y+kwargs['height'],
 
-			kwargs['x']-10, kwargs['y']+(kwargs['height']),
-			kwargs['x']-10, kwargs['y']-10
+			self.x-kwargs['style']['padding'], self.y+kwargs['height'],
+			self.x-kwargs['style']['padding'], self.y-kwargs['style']['padding']
 		)
 
 		colors = (255,255,255,255) * int(len(border)/2)
