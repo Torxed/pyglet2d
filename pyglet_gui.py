@@ -37,6 +37,7 @@ class resources():
 		with urllib.request.urlopen(url) as response:
 			data = response.read()
 		return genericSprite(ImageObject(io.BytesIO(data), debug=True, path=url), debug=True, *args, **kwargs)
+		# return genericSprite(io.BytesIO(data), path=url, debug=True, *args, **kwargs)
 
 class gfx():
 	colors = {
@@ -147,23 +148,22 @@ class ImageObject():
 			if self.debug:
 				print(self, 'Merging ImageObject')
 			self.texture = image.texture
-			#self.batch = image.batch
-			try:
-				kwargs['batch'] = image.batch
-			except:
-				pass # TODO: Failed to migrate batch, why?
-			self.updated = image.updated
-			try:
-				self._texture = image._texture
-			except:
-				self._texture = self.texture.get_texture()
-			self.batch = kwargs['batch']
+			## TODO: Investigate if we really need all these:
+			# self.texture = image.texture
+			# self.batch = image.batch
+			# try:
+			#	kwargs['batch'] = image.batch
+			# except:
+			#	pass # TODO: Failed to migrate batch, why?
+			# self.updated = image.updated
+			# try:
+			#	self._texture = image._texture
+			# except:
+			#	self._texture = self.texture.get_texture()
+			# self.batch = kwargs['batch']
 		else:
 			if self.debug:
 				print(self, 'Dummy ImageObject')
-
-			#x = self.generate_image(*args, **kwargs)
-			#print(x.get_texture().id)
 
 			self._x = kwargs['x']
 			self._y = kwargs['y']
