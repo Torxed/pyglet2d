@@ -297,13 +297,13 @@ class genericSprite(ImageObject, pyglet.sprite.Sprite):
 	def hover_out(self, x, y):
 		pass
 
-	def click(self, x, y, button):
+	def click(self, x, y, button=None):
 		pass
 
-	def mouse_down(self, x, y, button):
+	def mouse_down(self, x, y, button=None):
 		pass
 
-	def mouse_up(self, x, y, button):
+	def mouse_up(self, x, y, button=None):
 		pass
 
 	def mouse_inside(self, x, y, mouse_button=None):
@@ -375,7 +375,13 @@ class genericInteractive(genericSprite, themedObject):
 		self.sprites['label'] = pyglet.text.Label(kwargs['label'], x=kwargs['x'], y=kwargs['y'], batch=self.batch)
 
 	def move(self, dx, dy):
-		print(self._list)
+		self.sprites['label'].x += dx
+		self.sprites['label'].y += dy
+
+		new_vertices = []
+		for x, y in zip(*[iter(self._list.vertices)] * 2):
+			new_vertices += [x+dx, y+dy]
+		self._list.vertices = new_vertices
 
 #	def render(self):
 #		self.label.draw()
@@ -489,6 +495,7 @@ class camera():
 class windowWrapper(pyglet.window.Window):
 	def __init__ (self, width=800, height=600, fps=False, *args, **kwargs):
 		super(windowWrapper, self).__init__(width, height, *args, **kwargs)
+		if not 'debug' in kwargs: kwargs['debug'] = False
 		self.x, self.y = 0, 0
 
 		self.sprites = OrderedDict()
@@ -513,6 +520,7 @@ class windowWrapper(pyglet.window.Window):
 		self.mouse_y = 0
 
 		self.alive = 1
+		self.debug = kwargs['debug']
 
 		self.camera = camera(0, 0, parent=self)
 		glClearColor(0/255, 0/255, 0/255, 0/255)
@@ -600,7 +608,8 @@ class windowWrapper(pyglet.window.Window):
 				#print('Clickchecking:', sprite, 'with button', button)
 			sprite_obj = sprite.mouse_inside(x, y, button)
 			if sprite_obj:
-				print('[DEBUG] Releasing mouse inside {name}\'s object: {obj}'.format(**{'name' : sprite_name, 'obj' : sprite_obj}))
+				if self.debug: 
+					print('[DEBUG] Releasing mouse inside {name}\'s object: {obj}'.format(**{'name' : sprite_name, 'obj' : sprite_obj}))
 				sprite_obj.click(x, y)
 				sprite_obj.mouse_up(x, y, button)
 			else:
@@ -615,7 +624,8 @@ class windowWrapper(pyglet.window.Window):
 					sprite_obj = sprite.mouse_inside(x, y, button)
 					#print(sprite_obj)
 					if sprite_obj:
-						print('[DEBUG] Activating {name}\'s object: {obj}'.format(**{'name' : sprite_name, 'obj' : sprite_obj}))
+						if self.debug: 
+							print('[DEBUG] Activating {name}\'s object: {obj}'.format(**{'name' : sprite_name, 'obj' : sprite_obj}))
 						self.active[sprite_name] = sprite_obj
 						sprite_obj.mouse_down(x, y, button)
 

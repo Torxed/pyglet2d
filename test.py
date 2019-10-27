@@ -41,7 +41,7 @@ class testButton(genericInteractive):
 		genericInteractive.__init__(self, *args, **kwargs)
 
 	def click(self, *args, **kwargs):
-		print('Clicked', self)
+		print('I am a test button!')
 
 class window(windowWrapper):
 	def __init__(self):
