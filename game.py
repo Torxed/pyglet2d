@@ -9,8 +9,15 @@ class bullet(genericShape):
 		super(bullet, self).__init__('GL_TRIANGLES', radius=5, *args, **kwargs)
 		self.set_color(gfx.hex_to_colorpair(gfx.colors['barbie pink'])*int(len(self.vertices.vertices)/2))
 
+		self.acceleration = 1000
+		self.direction = 0
+		self.last = time()
+
 	def update(self):
-		self.move(0, 1)
+		dy = (time()-self.last) * self.acceleration
+		self.last = time()
+		self.move(0, dy)
+
 		if 0 < self.x > window.width or 0 < self.y > window.height:
 			self.delete()
 			return True
@@ -20,9 +27,13 @@ class player(genericShape):
 		## TODO: Add batch
 		super(player, self).__init__('GL_TRIANGLES', *args, **kwargs)
 		self.set_color(gfx.hex_to_colorpair(gfx.colors['tea_green'])*int(len(self.points)/2))
+		self.last_fire = time()-2
+		self.fire_rate = 1 / 10
 
 	def fire(self):
+		#if time()-self.last_fire > self.fire_rate:
 		add_sprite(f'bullet_{time()}', bullet(x=self.x, y=self.y))
+		#	self.last_fire = time()
 
 	def update(self):
 		self.move(randint(-1, 1), randint(-1, 1))

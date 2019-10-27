@@ -438,18 +438,23 @@ class simplified_GL_TRIANGLES():
 			('v2i/stream', self.points),
 			('c3B', self.colors))
 
+		self._internal_vertices = self.vertices.vertices
+
 	def move(self, dx, dy):
 		## == Iterate through the vertices and move their
 		##    x and y coordinates accordingly.
 		##
 		new_vertices = []
-		for index in range(0, len(self.vertices.vertices),2):
-			old_x, old_y = self.vertices.vertices[index:index+2]
+		new_pyglet_vertices = []
+		for index in range(0, len(self._internal_vertices),2):
+			old_x, old_y = self._internal_vertices[index:index+2]
 			new_vertices += [old_x+dx, old_y+dy]
+			new_pyglet_vertices += [int(old_x+dx), int(old_y+dy)]
 
 		self._x += dx
 		self._y += dy
-		self.vertices.vertices = new_vertices
+		self.vertices.vertices = new_pyglet_vertices
+		self._internal_vertices = new_vertices
 
 	def set_color(self, array):
 		self.colors = array
