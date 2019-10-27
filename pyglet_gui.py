@@ -45,7 +45,13 @@ class gfx():
 		'umber' : '#6C5A49',
 		'vegas_gold' : '#C8AD55',
 		'tea_green' : '#D0FCB3',
-		'eton_blue' : '#9BC59D'
+		'eton_blue' : '#9BC59D',
+		'davy\'s grey' : '#595457',
+		'burgundy' : '#710627',
+		'big dip o\'ruby' : '#9E1946',
+		'barbie pink' : '#DE0D92',
+		'ultramarine blue' : '#4D6CFA'
+
 	}
 
 	def hex_to_colorpair(hex):
@@ -68,7 +74,7 @@ class gfx():
 
 		return a
 
-	def create_circle(x, y, radius=25, sides=50, batch=None, texture_group=None, colors=None):
+	def create_circle(x, y, radius=25, sides=50, batch=None, texture_group=None, colors=None, *args, **kwargs):
 		# calculate at what degrees each point will be.
 		deg = 360/sides
 
@@ -91,15 +97,15 @@ class gfx():
 		points += prev
 		points += points[2:4]
 
-		if batch:
-			if not colors: raise RenderError("Need colors when creating a batch-connected circle. len(vertices)/2 of them!")
-			return {
-				'blob' : batch.add(int(len(points)/2), pyglet.gl.GL_TRIANGLES, texture_group, ('v2i/stream', points), ('c3B', colors)),
-				'x' : x,
-				'y' : y
-			}
-		else:
-			return points
+		#if batch:
+		#	if not colors: raise RenderError("Need colors when creating a batch-connected circle. len(vertices)/2 of them!")
+		#	return {
+		#		'blob' : batch.add(int(len(points)/2), pyglet.gl.GL_TRIANGLES, texture_group, ('v2i/stream', points), ('c3B', colors)),
+		#		'x' : x,
+		#		'y' : y
+		#	}
+		#else:
+		return points
 
 class dummyTexture():
 	def __init__(self, width, height, *args, **kwargs):
@@ -110,6 +116,8 @@ class dummyTexture():
 			print('Initiating dummyTexture()')
 		self.width = 0
 		self.height = 0
+		self._width = 0
+		self._height = 0
 		self.anchor_x = 0
 		self.anchor_y = 0
 		#self.tex_coords = (0.0, 0.0, 0.0, 0.9375, 0.0, 0.0, 0.9375, 0.9375, 0.0, 0.0, 0.9375, 0.0)
@@ -218,6 +226,7 @@ class genericSprite(ImageObject, pyglet.sprite.Sprite):
 		if not 'y' in kwargs: kwargs['y'] = 0
 		if not 'debug' in kwargs: kwargs['debug'] = False
 		if not 'batch' in kwargs: kwargs['batch'] = pyglet.graphics.Batch()
+		if not 'dragable' in kwargs: kwargs['dragable'] = False
 		self.debug = kwargs['debug']
 
 		ImageObject.__init__(self, texture, *args, **kwargs)
@@ -243,6 +252,7 @@ class genericSprite(ImageObject, pyglet.sprite.Sprite):
 			self._x = kwargs['x']
 			self._y = kwargs['y']
 			self._texture = dummyTexture(kwargs['width'], kwargs['height'], *args, **kwargs)
+			print(self, self._texture)
 			#moo = pyglet.sprite.Sprite(self.generate_image(*args, **kwargs))
 			self.batch = kwargs['batch']
 			#self.render = self.dummy_draw
@@ -250,6 +260,7 @@ class genericSprite(ImageObject, pyglet.sprite.Sprite):
 			#self.y = kwargs['y']
 
 		self._rot = 0
+		self.dragable = kwargs['dragable']
 
 	def resize(self, width=None, height=None, *args, **kwargs):
 		if width:
@@ -284,12 +295,12 @@ class genericSprite(ImageObject, pyglet.sprite.Sprite):
 		
 
 	def move(self, dx, dy):
-		print('Moving:', self)
-		self.x += dx
-		self.y += dy
-		for sprite in self.sprites:
-			self.sprites[sprite].x += dx
-			self.sprites[sprite].y += dy
+		if self.dragable:
+			self.x += dx
+			self.y += dy
+			for sprite in self.sprites:
+				self.sprites[sprite].x += dx
+				self.sprites[sprite].y += dy
 
 	def hover(self, x, y):
 		pass
@@ -369,33 +380,35 @@ class genericInteractive(genericSprite, themedObject):
 		if not 'height' in kwargs: kwargs['height'] = 20
 		if not 'width' in kwargs: kwargs['width'] = len(kwargs['label'])*8
 		if not '_noBackdrop' in kwargs: kwargs['_noBackdrop'] = True
+		if not 'dragable' in kwargs: kwargs['dragable'] = False
 		genericSprite.__init__(self, *args, **kwargs)
 		if 'theme' in kwargs:
 			themedObject.__init__(self, kwargs, *args, **kwargs)
 		self.sprites['label'] = pyglet.text.Label(kwargs['label'], x=kwargs['x'], y=kwargs['y'], batch=self.batch)
+		self.dragable = kwargs['dragable']
 
 	def move(self, dx, dy):
-		self.sprites['label'].x += dx
-		self.sprites['label'].y += dy
+		if self.dragable:
+			self.sprites['label'].x += dx
+			self.sprites['label'].y += dy
 
-		# zip(a[::2], a[1::2])
-		new_vertices = []
-		for x, y in zip(*[iter(self._list.vertices)] * 2):
-			new_vertices += [x+dx, y+dy]
-		self._list.vertices = new_vertices
+			# zip(a[::2], a[1::2])
+			new_vertices = []
+			for x, y in zip(*[iter(self._list.vertices)] * 2):
+				new_vertices += [x+dx, y+dy]
+			self._list.vertices = new_vertices
 
-		## TODO: doing self.x creates white square.
-		## Something to do with the update() function of pyglet
-		## trying to re-create the vectors. See if we can mute this behavior.
-		self._x = self.sprites['label'].x
-		self._y = self.sprites['label'].y
+			## TODO: doing self.x creates white square.
+			## Something to do with the update() function of pyglet
+			## trying to re-create the vectors. See if we can mute this behavior.
+			self._x = self.sprites['label'].x
+			self._y = self.sprites['label'].y
 
 #	def render(self):
 #		self.label.draw()
 
 class simplified_GL_TRIANGLES():
 	def __init__(self, *args, **kwargs):
-		self.colors = None
 		## TODO: Investigate why `def render()` won't trigger if `self.render` already set...
 		## Apparently: https://docs.python.org/3/reference/datamodel.html#descriptors
 		## 11:32 < Widdershins> DoXiD: func exists as a class method, but you're setting an attribute with the same name on the instance during 
@@ -417,25 +430,34 @@ class simplified_GL_TRIANGLES():
 		# https://cdn.discordapp.com/attachments/463526340168122368/633244634956562432/unknown.png
 		#self.render = self._render
 
+		self.points = gfx.create_circle(**kwargs)
+		num_of_points = int(len(self.points)/2)
+		self.colors = (255,255,255)*num_of_points
+		self.vertices = kwargs['batch'].add(
+			num_of_points, pyglet.gl.GL_TRIANGLES, None, 
+			('v2i/stream', self.points),
+			('c3B', self.colors))
+
 	def move(self, dx, dy):
 		## == Iterate through the vertices and move their
 		##    x and y coordinates accordingly.
 		##
 		new_vertices = []
-		for index in range(0, len(self.vertices),2):
-			old_x, old_y = self.vertices[index:index+2]
+		for index in range(0, len(self.vertices.vertices),2):
+			old_x, old_y = self.vertices.vertices[index:index+2]
 			new_vertices += [old_x+dx, old_y+dy]
 
 		self._x += dx
 		self._y += dy
-		self.vertices = new_vertices
+		self.vertices.vertices = new_vertices
 
 	def set_color(self, array):
 		self.colors = array
+		self.vertices.colors = self.colors
 
 	def pre_render(self):
 		if self.colors == None:
-			self.set_color((255,255,255)*int(len(self.vertices)/2))
+			self.set_color((255,255,255)*int(len(self.points)/2))
 
 	def render(self):
 		pyglet.graphics.draw(int(len(self.vertices)/2), pyglet.gl.GL_TRIANGLES,
@@ -451,13 +473,14 @@ class genericShape(simplified_GL_TRIANGLES, genericSprite):
 		genericSprite.__init__(self, *args, **kwargs)
 
 		if shapeType == 'GL_TRIANGLES':
+			if not 'batch' in kwargs: kwargs['batch'] = self.batch
 			simplified_GL_TRIANGLES.__init__(self, *args, **kwargs)
 
-		self.circle = gfx.create_circle(kwargs['x'], kwargs['y'], batch=None, radius=25)
-		#if self.batch:
-		#	self.vertices = self.circle['blob'].vertices
-		#else:
-		self.vertices = self.circle
+			#self.circle = gfx.create_circle(**kwargs)
+			#if self.batch:
+			#	self.vertices = self.circle['blob'].vertices
+			#else:
+			#self.vertices = self.circle
 
 class fps_counter(genericInteractive):
 	def __init__(self, *args, **kwargs):
@@ -584,6 +607,8 @@ class windowWrapper(pyglet.window.Window):
 		self.t_merge_sprites_dict[name] = {'sprite_obj' : sprite_obj, 'conf' : sprite_parameters}
 
 	def add_sprite(self, name, sprite_obj):
+		#sprite_obj.batch = self.pages['default']['batch']
+		#print(f'Adding sprite {sprite_obj} to:', self.pages['default']['batch'])
 		self.merge_sprites_dict[name] = sprite_obj
 
 	def merge_sprites(self):
@@ -600,14 +625,14 @@ class windowWrapper(pyglet.window.Window):
 
 			self.sprites[name] = sprite
 
-			self.pages[ list(page for page in self.active_pages.keys())[-1] ]['sprites'][name] = sprite
+			self.pages[ list(self.active_pages.keys())[-1] ]['sprites'][name] = sprite
 
 		while len(self.t_merge_sprites_dict) > 0:
 			name, values = self.t_merge_sprites_dict.popitem()
 			if name in self.sprites:
 				print('[WARNING] Sprite {name} already exists, replaceing!'.format(**{'name' : name}))
 
-			last_page = list(page for page in self.active_pages.keys())[-1]
+			last_page = list(self.active_pages.keys())[-1]
 
 			self.sprites[name] = values['sprite_obj'](**values['conf'])
 			self.pages[last_page]['sprites'][name] = self.sprites[name]
@@ -656,10 +681,7 @@ class windowWrapper(pyglet.window.Window):
 		self.log(f'Mouse pressed: {x,y}')
 		if button == 1:
 			for sprite_name, sprite in self.sprites.items():
-				#if sprite:
-				#print('Clickchecking:', sprite, 'with button', button)
 				sprite_obj = sprite.mouse_inside(x, y, button)
-				#print(sprite_obj)
 				if sprite_obj:
 					if self.debug: 
 						self.log('Activating {name}\'s object: {obj}'.format(**{'name' : sprite_name, 'obj' : sprite_obj}))
@@ -710,7 +732,8 @@ class windowWrapper(pyglet.window.Window):
 			self.keys[symbol] = None
 
 	def post_setup(self):
-		pass
+		__builtins__['add_sprite'] = self.add_sprite
+		__builtins__['window'] = self
 
 	def pre_render(self):
 		for key, val in self.keys.items():
@@ -748,10 +771,20 @@ class windowWrapper(pyglet.window.Window):
 					print('[ERROR] {page} does not exists in pages: {pages}'.format(**{'page' : page, 'pages' : self.pages}))
 					continue
 
+				filtered_sprites = {}
+				batches = {}
 				for sprite_name, sprite_obj in self.pages[page]['sprites'].items():
-					sprite_obj.update()
-					sprite_obj.pre_render() # TODO: Might be a hogger
-					sprite_obj.render()
+					if sprite_obj.update() is None:
+						sprite_obj.pre_render() # TODO: Might be a hogger
+						batches[sprite_obj.batch] = True
+						#sprite_obj.render()
+						filtered_sprites[sprite_name] = sprite_obj
+
+				## Loop over any custom batches found inside the sprites
+				for batch in batches:
+					batch.draw()
+
+				self.pages[page]['sprites'] = filtered_sprites
 				self.pages[page]['batch'].draw()
 
 		if self.log_array:
