@@ -426,6 +426,8 @@ class simplified_GL_TRIANGLES():
 			old_x, old_y = self.vertices[index:index+2]
 			new_vertices += [old_x+dx, old_y+dy]
 
+		self._x += dx
+		self._y += dy
 		self.vertices = new_vertices
 
 	def set_color(self, array):
@@ -536,6 +538,7 @@ class windowWrapper(pyglet.window.Window):
 		self.active = OrderedDict()
 
 		self.keys = OrderedDict()
+		self.drag_ongoing = False
 		
 		self.mouse_x = 0
 		self.mouse_y = 0
@@ -667,6 +670,15 @@ class windowWrapper(pyglet.window.Window):
 	def on_mouse_drag(self, x, y, dx, dy, button, modifiers):
 		self.drag = True
 
+		if len(self.active) <= 0 and not self.drag_ongoing:
+			for sprite_name, sprite in self.sprites.items():
+				sprite_obj = sprite.mouse_inside(x, y, button)
+				if sprite_obj:
+					if self.debug: 
+						self.log('Activating {name}\'s object: {obj}'.format(**{'name' : sprite_name, 'obj' : sprite_obj}))
+					self.active[sprite_name] = sprite_obj
+					sprite_obj.mouse_down(x, y, button)
+
 		if self.log_array[-1] != f'Mouse draging {len(self.active)}':
 			self.log(f'Mouse draging {len(self.active)}')
 
@@ -674,8 +686,7 @@ class windowWrapper(pyglet.window.Window):
 		for name, obj in self.active.items():
 			obj.move(dx, dy)
 
-		#if None not in self.active:
-		#	self.active[1].move(dx, dy)
+		self.drag_ongoing = True
 
 	def on_key_release(self, symbol, modifiers):
 		if symbol == key.LCTRL:
