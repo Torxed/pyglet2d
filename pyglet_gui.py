@@ -582,26 +582,28 @@ class windowWrapper(pyglet.window.Window):
 			# ergo, not just a graphical link/bond.
 
 	def on_mouse_release(self, x, y, button, modifiers):
-		if button == 1:
-			if not key.LCTRL in self.keys:
-				self.active = OrderedDict()
-		elif button == 4:
-			for sprite_name, sprite in self.sprites.items():
-				if sprite:
-					print('Clickchecking:', sprite, 'with button', button)
-					sprite_obj = sprite.mouse_inside(x, y, button)
-					if sprite_obj:
-						print('[DEBUG] Right clicking inside {name}\'s object: {obj}'.format(**{'name' : sprite_name, 'obj' : sprite_obj}))
-						sprite_obj.right_click(x, y)
-			
+		#if button == 1:
+		#	if not key.LCTRL in self.keys:
+		#		self.active = OrderedDict()
+		#elif button == 4:
+		for sprite_name, sprite in list(self.active.items()):
+			#if sprite:
+				#print('Clickchecking:', sprite, 'with button', button)
+			sprite_obj = sprite.mouse_inside(x, y, button)
+			if sprite_obj:
+				print('[DEBUG] Releasing mouse inside {name}\'s object: {obj}'.format(**{'name' : sprite_name, 'obj' : sprite_obj}))
+				sprite_obj.click(x, y)
+			else:
+				del(self.active[sprite_name])
+	
 
 	def on_mouse_press(self, x, y, button, modifiers):
 		if button == 1:
 			for sprite_name, sprite in self.sprites.items():
 				if sprite:
-					print('Clickchecking:', sprite, 'with button', button)
+					#print('Clickchecking:', sprite, 'with button', button)
 					sprite_obj = sprite.mouse_inside(x, y, button)
-					print(sprite_obj)
+					#print(sprite_obj)
 					if sprite_obj:
 						print('[DEBUG] Activating {name}\'s object: {obj}'.format(**{'name' : sprite_name, 'obj' : sprite_obj}))
 						self.active[sprite_name] = sprite_obj

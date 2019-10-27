@@ -50,7 +50,7 @@ class window(windowWrapper):
 		self.add_sprite('circle', circle(x=int(self.width/2), y=int(self.height/2), alpha=0))
 		self.add_sprite('smilyface', smilyface(x=100, y=100, width=20, height=20, alpha=0))
 		self.add_sprite('webimage', resources.image_from_url('https://hvornum.se/favicon.ico', x=self.width-64, y=self.height-64))
-		self.add_sprite('button', testButton(debug=True, label='щракни ми', x=64, y=self.height-64))
+		self.add_sprite('button', testButton(label='щракни ми', x=64, y=self.height-64))
 
 	def key_E(self, *args, **kwargs):
 		self.sprites['webimage'].rotate(0.5)
