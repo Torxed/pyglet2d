@@ -384,6 +384,12 @@ class genericInteractive(genericSprite, themedObject):
 			new_vertices += [x+dx, y+dy]
 		self._list.vertices = new_vertices
 
+		## TODO: doing self.x creates white square.
+		## Something to do with the update() function of pyglet
+		## trying to re-create the vectors. See if we can mute this behavior.
+		self._x = self.sprites['label'].x
+		self._y = self.sprites['label'].y
+
 #	def render(self):
 #		self.label.draw()
 
@@ -494,9 +500,8 @@ class camera():
 		#print(f'Camera moved to: {self.x,self.y} x {self.width, self.height}')
 
 class windowWrapper(pyglet.window.Window):
-	def __init__ (self, width=800, height=600, fps=False, log=False, *args, **kwargs):
+	def __init__ (self, width=800, height=600, fps=False, debug=False, log=False, *args, **kwargs):
 		super(windowWrapper, self).__init__(width, height, *args, **kwargs)
-		if not 'debug' in kwargs: kwargs['debug'] = False
 		self.x, self.y = 0, 0
 
 		self.sprites = OrderedDict()
@@ -519,7 +524,7 @@ class windowWrapper(pyglet.window.Window):
 			self.log_document.text = '\n'.join(self.log_array)
 			self.log_document.set_style(0, len(self.log_document.text), dict(font_name='Arial', font_size=12, color=(128, 128, 128,255)))
 			
-			self.log_layout = pyglet.text.layout.TextLayout(self.log_document, 240, 12*self.log_document.text.count('\n'), multiline=True)
+			self.log_layout = pyglet.text.layout.TextLayout(self.log_document, 240, 12*self.log_document.text.count('\n'), multiline=True, wrap_lines=False)
 			self.log_layout.x=10
 			self.log_layout.y=14*self.log_document.text.count('\n')
 			self.log_layout.anchor_x='left'
@@ -536,7 +541,7 @@ class windowWrapper(pyglet.window.Window):
 		self.mouse_y = 0
 
 		self.alive = 1
-		self.debug = kwargs['debug']
+		self.debug = debug
 
 		self.camera = camera(0, 0, parent=self)
 		glClearColor(0/255, 0/255, 0/255, 0/255)
@@ -635,26 +640,28 @@ class windowWrapper(pyglet.window.Window):
 			sprite_obj = sprite.mouse_inside(x, y, button)
 			if sprite_obj:
 				if self.debug: 
-					print('[DEBUG] Releasing mouse inside {name}\'s object: {obj}'.format(**{'name' : sprite_name, 'obj' : sprite_obj}))
+					self.log('Releasing mouse inside {name}\'s object: {obj}'.format(**{'name' : sprite_name, 'obj' : sprite_obj}))
 				sprite_obj.click(x, y)
 				sprite_obj.mouse_up(x, y, button)
-			else:
-				del(self.active[sprite_name])
+
+			if self.debug:
+				self.log(f'{sprite_name} is no longer active')
+			del(self.active[sprite_name])
 	
 
 	def on_mouse_press(self, x, y, button, modifiers):
 		self.log(f'Mouse pressed: {x,y}')
 		if button == 1:
 			for sprite_name, sprite in self.sprites.items():
-				if sprite:
-					#print('Clickchecking:', sprite, 'with button', button)
-					sprite_obj = sprite.mouse_inside(x, y, button)
-					#print(sprite_obj)
-					if sprite_obj:
-						if self.debug: 
-							print('[DEBUG] Activating {name}\'s object: {obj}'.format(**{'name' : sprite_name, 'obj' : sprite_obj}))
-						self.active[sprite_name] = sprite_obj
-						sprite_obj.mouse_down(x, y, button)
+				#if sprite:
+				#print('Clickchecking:', sprite, 'with button', button)
+				sprite_obj = sprite.mouse_inside(x, y, button)
+				#print(sprite_obj)
+				if sprite_obj:
+					if self.debug: 
+						self.log('Activating {name}\'s object: {obj}'.format(**{'name' : sprite_name, 'obj' : sprite_obj}))
+					self.active[sprite_name] = sprite_obj
+					sprite_obj.mouse_down(x, y, button)
 
 
 	def on_mouse_drag(self, x, y, dx, dy, button, modifiers):

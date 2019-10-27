@@ -45,7 +45,7 @@ class testButton(genericInteractive):
 
 class window(windowWrapper):
 	def __init__(self):
-		super(window, self).__init__(vsync=False, log=True, fps=True)
+		super(window, self).__init__(vsync=False, debug=True, log=True, fps=True)
 
 		self.add_sprite('circle', circle(x=int(self.width/2), y=int(self.height/2), alpha=0))
 		self.add_sprite('smilyface', smilyface(x=100, y=200, width=20, height=20, alpha=0))
