@@ -9,7 +9,7 @@ class bullet(genericShape):
 		super(bullet, self).__init__('GL_TRIANGLES', radius=5, *args, **kwargs)
 		self.set_color(gfx.hex_to_colorpair(gfx.colors['barbie pink'])*int(len(self.vertices.vertices)/2))
 
-		self.acceleration = 1000
+		self.acceleration = 500
 		self.direction = 0
 		self.last = time()
 
@@ -29,11 +29,12 @@ class player(genericShape):
 		self.set_color(gfx.hex_to_colorpair(gfx.colors['tea_green'])*int(len(self.points)/2))
 		self.last_fire = time()-2
 		self.fire_rate = 1 / 10
+		self.god_mode = False
 
 	def fire(self):
-		#if time()-self.last_fire > self.fire_rate:
-		add_sprite(f'bullet_{time()}', bullet(x=self.x, y=self.y))
-		#	self.last_fire = time()
+		if self.god_mode or time()-self.last_fire > self.fire_rate:
+			add_sprite(f'bullet_{time()}', bullet(x=self.x, y=self.y))
+			self.last_fire = time()
 
 	def update(self):
 		self.move(randint(-1, 1), randint(-1, 1))
@@ -71,6 +72,10 @@ class _window(windowWrapper):
 
 	def key_A(self, symbol, event, modifiers, *args, **kwargs):
 		self.camera.move(-1, 0)
+
+	def key_LCTRL(self, symbol, event, *args, **kwargs):
+		if 'player' in self.sprites:
+			self.sprites['player'].god_mode = True if event == 'press' else False
 
 W = _window()
 W.run()

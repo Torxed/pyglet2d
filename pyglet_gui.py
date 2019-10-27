@@ -720,6 +720,7 @@ class windowWrapper(pyglet.window.Window):
 			self.active = OrderedDict()
 
 		self.log(f'Key released: {key.symbol_string(symbol)}')
+		self.keys[symbol]['func'](symbol, 'release', modifiers)
 		try:
 			del self.keys[symbol]
 		except:
