@@ -32,6 +32,7 @@ Usage example
 Here's a quick demo of what you can do:<br>
 *(for more examples, see [test.py](/test.py))*
 
+[Video example](https://youtu.be/rUTfhjEtTdQ) *(from screenshot below)*
 ![screenshot](screenshot.png)
 
 ```Python
