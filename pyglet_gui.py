@@ -297,6 +297,15 @@ class genericSprite(ImageObject, pyglet.sprite.Sprite):
 	def hover_out(self, x, y):
 		pass
 
+	def click(self, x, y, button):
+		pass
+
+	def mouse_down(self, x, y, button):
+		pass
+
+	def mouse_up(self, x, y, button):
+		pass
+
 	def mouse_inside(self, x, y, mouse_button=None):
 		if self.debug:
 			print(f'Inside: {self}, {x, y} | {self.x,self.y}, {self.width, self.height}')
@@ -593,6 +602,7 @@ class windowWrapper(pyglet.window.Window):
 			if sprite_obj:
 				print('[DEBUG] Releasing mouse inside {name}\'s object: {obj}'.format(**{'name' : sprite_name, 'obj' : sprite_obj}))
 				sprite_obj.click(x, y)
+				sprite_obj.mouse_up(x, y, button)
 			else:
 				del(self.active[sprite_name])
 	
@@ -607,6 +617,7 @@ class windowWrapper(pyglet.window.Window):
 					if sprite_obj:
 						print('[DEBUG] Activating {name}\'s object: {obj}'.format(**{'name' : sprite_name, 'obj' : sprite_obj}))
 						self.active[sprite_name] = sprite_obj
+						sprite_obj.mouse_down(x, y, button)
 
 
 	def on_mouse_drag(self, x, y, dx, dy, button, modifiers):
