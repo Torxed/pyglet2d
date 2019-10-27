@@ -494,7 +494,7 @@ class camera():
 		#print(f'Camera moved to: {self.x,self.y} x {self.width, self.height}')
 
 class windowWrapper(pyglet.window.Window):
-	def __init__ (self, width=800, height=600, fps=False, *args, **kwargs):
+	def __init__ (self, width=800, height=600, fps=False, log=False, *args, **kwargs):
 		super(windowWrapper, self).__init__(width, height, *args, **kwargs)
 		if not 'debug' in kwargs: kwargs['debug'] = False
 		self.x, self.y = 0, 0
@@ -512,6 +512,21 @@ class windowWrapper(pyglet.window.Window):
 		if fps:
 			self.add_sprite('fps_label', fps_counter(x=self.width/2-30, y=30, alpha=0, width=120, height=30))
 
+		if log:
+			self.log_array = []
+
+			self.log_document = pyglet.text.document.FormattedDocument()
+			self.log_document.text = '\n'.join(self.log_array)
+			self.log_document.set_style(0, len(self.log_document.text), dict(font_name='Arial', font_size=12, color=(128, 128, 128,255)))
+			
+			self.log_layout = pyglet.text.layout.TextLayout(self.log_document, 240, 12*self.log_document.text.count('\n'), multiline=True)
+			self.log_layout.x=10
+			self.log_layout.y=14*self.log_document.text.count('\n')
+			self.log_layout.anchor_x='left'
+			self.log_layout.anchor_y='bottom'
+		else:
+			self.log_array = None
+
 		self.drag = False
 		self.active = OrderedDict()
 
@@ -525,6 +540,13 @@ class windowWrapper(pyglet.window.Window):
 
 		self.camera = camera(0, 0, parent=self)
 		glClearColor(0/255, 0/255, 0/255, 0/255)
+
+	def log(self, *args):
+		self.log_array.append(''.join(args))
+		self.log_document.text = '\n'.join(self.log_array[-5:])
+		self.log_document.set_style(0, len(self.log_document.text), dict(font_name='Arial', font_size=12, color=(128, 128, 128,255)))
+		self.log_layout.height = 12*(self.log_document.text.count('\n')+1)
+		self.log_layout.y=12*(self.log_document.text.count('\n')+1)
 
 	def on_draw(self):
 		self.render()
@@ -618,6 +640,7 @@ class windowWrapper(pyglet.window.Window):
 	
 
 	def on_mouse_press(self, x, y, button, modifiers):
+		self.log(f'Mouse clicked: {x,y}')
 		if button == 1:
 			for sprite_name, sprite in self.sprites.items():
 				if sprite:
@@ -634,6 +657,9 @@ class windowWrapper(pyglet.window.Window):
 	def on_mouse_drag(self, x, y, dx, dy, button, modifiers):
 		self.drag = True
 
+		if self.log_array[-1] != f'Mouse draging {len(self.active)}':
+			self.log(f'Mouse draging {len(self.active)}')
+			
 		# Drag the sprites if possible:
 		for name, obj in self.active.items():
 			obj.move(dx, dy)
@@ -645,6 +671,7 @@ class windowWrapper(pyglet.window.Window):
 		if symbol == key.LCTRL:
 			self.active = OrderedDict()
 
+		self.log(f'Key released: {key.symbol_string(symbol)}')
 		try:
 			del self.keys[symbol]
 		except:
@@ -654,6 +681,7 @@ class windowWrapper(pyglet.window.Window):
 		if symbol == key.ESCAPE: # [ESC]
 			self.alive = 0
 
+		self.log(f'Key pressed: {key.symbol_string(symbol)}')
 		func = getattr(self, f'key_{key.symbol_string(symbol)}', None)
 		if callable(func):
 			self.keys[symbol] = {'func' : func, 'params' : (symbol, 'press', modifiers)}
@@ -705,6 +733,8 @@ class windowWrapper(pyglet.window.Window):
 					sprite_obj.render()
 				self.pages[page]['batch'].draw()
 
+		if self.log_array:
+			self.log_layout.draw()
 		self.flip()
 
 	def run(self):
