@@ -626,6 +626,9 @@ class windowWrapper(pyglet.window.Window):
 		#	if not key.LCTRL in self.keys:
 		#		self.active = OrderedDict()
 		#elif button == 4:
+
+		self.log(f'Mouse released: {x,y}')
+
 		for sprite_name, sprite in list(self.active.items()):
 			#if sprite:
 				#print('Clickchecking:', sprite, 'with button', button)
@@ -640,7 +643,7 @@ class windowWrapper(pyglet.window.Window):
 	
 
 	def on_mouse_press(self, x, y, button, modifiers):
-		self.log(f'Mouse clicked: {x,y}')
+		self.log(f'Mouse pressed: {x,y}')
 		if button == 1:
 			for sprite_name, sprite in self.sprites.items():
 				if sprite:
@@ -659,7 +662,7 @@ class windowWrapper(pyglet.window.Window):
 
 		if self.log_array[-1] != f'Mouse draging {len(self.active)}':
 			self.log(f'Mouse draging {len(self.active)}')
-			
+
 		# Drag the sprites if possible:
 		for name, obj in self.active.items():
 			obj.move(dx, dy)
