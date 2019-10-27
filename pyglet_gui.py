@@ -378,6 +378,7 @@ class genericInteractive(genericSprite, themedObject):
 		self.sprites['label'].x += dx
 		self.sprites['label'].y += dy
 
+		# zip(a[::2], a[1::2])
 		new_vertices = []
 		for x, y in zip(*[iter(self._list.vertices)] * 2):
 			new_vertices += [x+dx, y+dy]
