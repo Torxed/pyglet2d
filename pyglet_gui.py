@@ -490,19 +490,37 @@ class genericShape(simplified_GL_TRIANGLES, genericSprite):
 class fps_counter(genericInteractive):
 	def __init__(self, *args, **kwargs):
 		super(fps_counter, self).__init__(*args, **kwargs)
-		#self.text = '- fps'
 		self.fps = 0
 		self.last_udpate = time()
-		#self.lbl = pyglet.text.Label(self.text, x=kwargs['x'], y=kwargs['y'])
 
 	def update(self):
 		self.fps += 1
 
 		if time()-self.last_udpate>1:
-
 			self.sprites['label'].text = str(self.fps) + 'fps'
 			self.fps = 0
 			self.last_udpate = time()
+
+class stats_frame(genericInteractive):
+	def __init__(self, *args, **kwargs):
+		super(stats_frame, self).__init__(*args, **kwargs)
+		self.last_udpate = time()
+
+		self.update_times = []
+		self.render_times = []
+
+	def update(self):
+		if time()-self.last_udpate>1:
+			self.x = window.sprites['fps_label'].x + window.sprites['fps_label'].width
+			self.sprites['label'].x = self.x
+
+			update = '{:.4f}'.format(sum(self.update_times) / len(self.update_times))
+			render = '{:.4f}'.format(sum(self.render_times) / len(self.render_times))
+			self.sprites['label'].text = f'{len(window.sprites)} sprites | {update} on updates | {render} on render'
+			self.last_udpate = time()
+
+			self.update_times = self.update_times[-10:]
+			self.render_times = self.render_times[-10:]
 
 class camera():
 	# http://docs.gl/gl2/glOrtho
@@ -530,7 +548,7 @@ class camera():
 		#print(f'Camera moved to: {self.x,self.y} x {self.width, self.height}')
 
 class windowWrapper(pyglet.window.Window):
-	def __init__ (self, width=800, height=600, fps=False, debug=False, log=False, *args, **kwargs):
+	def __init__ (self, width=800, height=600, fps=False, stats=False, debug=False, log=False, *args, **kwargs):
 		super(windowWrapper, self).__init__(width, height, *args, **kwargs)
 		self.x, self.y = 0, 0
 
@@ -545,7 +563,10 @@ class windowWrapper(pyglet.window.Window):
 		__builtins__['pages'] = self.pages
 
 		if fps:
-			self.add_sprite('fps_label', fps_counter(x=self.width/2-30, y=30, alpha=0, width=120, height=30))
+			self.add_sprite('fps_label', fps_counter(x=4, y=self.height-16, alpha=0, width=120, height=30))
+
+		if stats:
+			self.add_sprite('stats_frame', stats_frame(x=4, y=self.height-16, alpha=0, width=120, height=30))
 
 		if log:
 			self.log_array = []
@@ -779,12 +800,21 @@ class windowWrapper(pyglet.window.Window):
 
 				filtered_sprites = {}
 				batches = {}
+				if 'stats_frame' in self.sprites:
+					start = time()
 				for sprite_name, sprite_obj in self.pages[page]['sprites'].items():
 					if sprite_obj.update() is None:
 						sprite_obj.pre_render() # TODO: Might be a hogger
 						batches[sprite_obj.batch] = True
 						#sprite_obj.render()
 						filtered_sprites[sprite_name] = sprite_obj
+					else:
+						del(self.sprites[sprite_name])
+
+				if 'stats_frame' in self.sprites:
+					end = time()
+					self.sprites['stats_frame'].update_times.append(end-start)
+					start = time()
 
 				## Loop over any custom batches found inside the sprites
 				for batch in batches:
@@ -793,8 +823,13 @@ class windowWrapper(pyglet.window.Window):
 				self.pages[page]['sprites'] = filtered_sprites
 				self.pages[page]['batch'].draw()
 
+				if 'stats_frame' in self.sprites:
+					end = time()
+					self.sprites['stats_frame'].render_times.append(end-start)
+
 		if self.log_array:
 			self.log_layout.draw()
+
 		self.flip()
 
 	def run(self):

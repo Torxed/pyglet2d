@@ -51,7 +51,7 @@ class startButton(genericInteractive):
 
 class _window(windowWrapper):
 	def __init__(self):
-		super(_window, self).__init__(vsync=False, debug=True, log=True, fps=True)
+		super(_window, self).__init__(vsync=False, stats=True, debug=True, log=True, fps=True)
 
 		#self.add_sprite('player', player(x=int(self.width/2), y=int(self.height/2), alpha=0))
 		self.add_sprite('webimage', resources.image_from_url('https://hvornum.se/favicon.ico', x=self.width-64, y=self.height-64, dragable=False))
